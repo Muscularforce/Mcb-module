@@ -3,9 +3,9 @@ import re
 from datetime import datetime
 from bs4 import BeautifulSoup
 from notion_client import Client
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
-PORTAL_URL = "https://rainbow.myclassboard.com/StudentERP/Master_Student"
+PORTAL_URL = "https://rainbow.myclassboard.com"
 DIARY_URL = "https://rainbow.myclassboard.com/StudentERP/StaffDiaryToStudent_CalenderView_AllActivities"
 
 NOTION_TOKEN = os.environ["NOTION_TOKEN"]
@@ -20,77 +20,60 @@ def today_diary_date():
     return datetime.now().strftime("%d %b %Y")
 
 
+def try_fill_first_matching(locator_list, value):
+    for loc in locator_list:
+        try:
+            if loc.count() > 0:
+                loc.first.fill(value)
+                return True
+        except Exception:
+            pass
+    return False
+
+
 def login_and_fetch_html(diary_date: str) -> str:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
 
-        # open login page
-        page.goto("https://rainbow.myclassboard.com", wait_until="domcontentloaded")
+        page.goto(PORTAL_URL, wait_until="domcontentloaded")
+        page.wait_for_load_state("networkidle")
 
-        # wait for login form
-        page.wait_for_selector("input[type='text']", timeout=60000)
+        # Try a few common login selectors
+        username_candidates = [
+            page.locator("input[type='text']"),
+            page.locator("input[type='email']"),
+            page.locator("input[name*='user' i]"),
+            page.locator("input[id*='user' i]"),
+            page.locator("input[id*='login' i]"),
+        ]
 
-        # fill credentials
-        page.locator("input[type='text']").fill(MCB_USERNAME)
-        page.locator("input[type='password']").fill(MCB_PASSWORD)
+        password_candidates = [
+            page.locator("input[type='password']"),
+            page.locator("input[name*='pass' i]"),
+            page.locator("input[id*='pass' i]"),
+        ]
 
-        # click login
+        filled_user = try_fill_first_matching(username_candidates, MCB_USERNAME)
+        filled_pass = try_fill_first_matching(password_candidates, MCB_PASSWORD)
+
+        if not filled_user or not filled_pass:
+            page.screenshot(path="login_debug.png", full_page=True)
+            browser.close()
+            raise RuntimeError("Could not find login fields. Check login_debug.png in the GitHub Actions artifact/logs.")
+
         submit_buttons = page.locator("button, input[type='submit']")
         if submit_buttons.count() > 0:
             submit_buttons.first.click()
         else:
             page.keyboard.press("Enter")
 
-        # wait until dashboard loads
-        page.wait_for_load_state("networkidle")
+        try:
+            page.wait_for_load_state("networkidle", timeout=60000)
+        except PlaywrightTimeoutError:
+            pass
 
-        # request diary HTML
-        html = page.evaluate(
-            """
-            async ({url, diaryDate}) => {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: new URLSearchParams({ DiaryDate: diaryDate }).toString()
-                });
-                return await res.text();
-            }
-            """,
-            {"url": DIARY_URL, "diaryDate": diary_date},
-        )
-
-        browser.close()
-        return html
-
-        page.goto("https://rainbow.myclassboard.com", wait_until="domcontentloaded")
-
-# wait for login form to appear
-page.wait_for_selector("input[type='text']", timeout=60000)
-
-# fill login form
-page.locator("input[type='text']").fill(MCB_USERNAME)
-page.locator("input[type='password']").fill(MCB_PASSWORD)
-
-# click login button
-page.locator("button[type='submit'], input[type='submit']").first.click()
-
-# wait until dashboard loads
-page.wait_for_load_state("networkidle")
-        # Click the most likely submit button
-        submit_buttons = page.locator("button, input[type='submit']")
-        if submit_buttons.count() > 0:
-            submit_buttons.first.click()
-        else:
-            page.keyboard.press("Enter")
-
-        page.wait_for_load_state("networkidle")
-
-        # Fetch diary HTML using the same logged-in session
         html = page.evaluate(
             """
             async ({url, diaryDate}) => {
@@ -118,15 +101,15 @@ def clean_text(text: str) -> str:
 
 def extract_entries(html: str, diary_date: str):
     soup = BeautifulSoup(html, "html.parser")
-    text = clean_text(soup.get_text(" ", strip=True))
+    page_text = clean_text(soup.get_text(" ", strip=True))
 
-    if "No diary entries are found!" in text:
+    if "No diary entries are found!" in page_text:
         return []
 
     entries = []
     current_subject = None
 
-    # Walk the DOM in order and build records from each card body
+    # Walk through cards in order
     for node in soup.find_all(["h6", "div"]):
         if node.name == "h6":
             subject_span = node.find("span")
@@ -194,10 +177,8 @@ def already_exists(unique_key: str) -> bool:
         database_id=NOTION_DATABASE_ID,
         filter={
             "property": "Unique Key",
-            "rich_text": {
-                "equals": unique_key
-            }
-        }
+            "rich_text": {"equals": unique_key},
+        },
     )
     return len(res.get("results", [])) > 0
 
@@ -209,32 +190,16 @@ def create_notion_page(entry: dict):
 
     properties = {
         "Name": {
-            "title": [
-                {
-                    "text": {
-                        "content": title
-                    }
-                }
-            ]
+            "title": [{"text": {"content": title}}]
         },
         "Subject": {
-            "select": {
-                "name": entry["subject"]
-            }
+            "select": {"name": entry["subject"]}
         },
         "Type": {
-            "select": {
-                "name": entry["type"]
-            }
+            "select": {"name": entry["type"]}
         },
         "Teacher": {
-            "rich_text": [
-                {
-                    "text": {
-                        "content": entry["teacher"]
-                    }
-                }
-            ]
+            "rich_text": [{"text": {"content": entry["teacher"]}}]
         },
         "Date": {
             "date": {
@@ -242,36 +207,22 @@ def create_notion_page(entry: dict):
             }
         },
         "Summary": {
-            "rich_text": [
-                {
-                    "text": {
-                        "content": entry["summary"]
-                    }
-                }
-            ]
+            "rich_text": [{"text": {"content": entry["summary"]}}]
         },
         "Diary ID": {
             "number": entry["diary_id"] if entry["diary_id"] is not None else 0
         },
         "Unique Key": {
-            "rich_text": [
-                {
-                    "text": {
-                        "content": entry["unique_key"]
-                    }
-                }
-            ]
+            "rich_text": [{"text": {"content": entry["unique_key"]}}]
         },
     }
 
     if entry["attachment_url"]:
-        properties["Attachment"] = {
-            "url": entry["attachment_url"]
-        }
+        properties["Attachment"] = {"url": entry["attachment_url"]}
 
     notion.pages.create(
         parent={"database_id": NOTION_DATABASE_ID},
-        properties=properties
+        properties=properties,
     )
 
 
