@@ -1,3 +1,4 @@
+import requests
 import os
 import re
 from datetime import datetime
@@ -238,6 +239,14 @@ def main():
         if not already_exists(entry["unique_key"]):
             create_notion_page(entry)
             new_count += 1
+
+            send_discord_message(
+    f"📚 **New Homework**\n"
+    f"Subject: {entry['subject']}\n"
+    f"Type: {entry['type']}\n"
+    f"Teacher: {entry['teacher']}\n"
+    f"Details: {entry['summary']}"
+)
             print(f"Added: {entry['subject']} / {entry['type']}")
         else:
             print(f"Skipped duplicate: {entry['subject']} / {entry['type']}")
@@ -247,3 +256,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+    def send_discord_message(text):
+    webhook = os.environ["DISCORD_WEBHOOK"]
+
+    data = {
+        "content": text
+    }
+
+    requests.post(webhook, json=data)
