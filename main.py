@@ -26,13 +26,20 @@ def login_and_fetch_html(diary_date: str) -> str:
         context = browser.new_context()
         page = context.new_page()
 
-        page.goto(PORTAL_URL, wait_until="networkidle")
+        page.goto("https://rainbow.myclassboard.com", wait_until="domcontentloaded")
 
-        # If the login form selectors differ, inspect the login page once and adjust here.
-        # Common selector guesses:
-        page.locator("input").first.fill(MCB_USERNAME)
-        page.locator("input[type='password']").fill(MCB_PASSWORD)
+# wait for login form to appear
+page.wait_for_selector("input[type='text']", timeout=60000)
 
+# fill login form
+page.locator("input[type='text']").fill(MCB_USERNAME)
+page.locator("input[type='password']").fill(MCB_PASSWORD)
+
+# click login button
+page.locator("button[type='submit'], input[type='submit']").first.click()
+
+# wait until dashboard loads
+page.wait_for_load_state("networkidle")
         # Click the most likely submit button
         submit_buttons = page.locator("button, input[type='submit']")
         if submit_buttons.count() > 0:
