@@ -26,6 +26,47 @@ def login_and_fetch_html(diary_date: str) -> str:
         context = browser.new_context()
         page = context.new_page()
 
+        # open login page
+        page.goto("https://rainbow.myclassboard.com", wait_until="domcontentloaded")
+
+        # wait for login form
+        page.wait_for_selector("input[type='text']", timeout=60000)
+
+        # fill credentials
+        page.locator("input[type='text']").fill(MCB_USERNAME)
+        page.locator("input[type='password']").fill(MCB_PASSWORD)
+
+        # click login
+        submit_buttons = page.locator("button, input[type='submit']")
+        if submit_buttons.count() > 0:
+            submit_buttons.first.click()
+        else:
+            page.keyboard.press("Enter")
+
+        # wait until dashboard loads
+        page.wait_for_load_state("networkidle")
+
+        # request diary HTML
+        html = page.evaluate(
+            """
+            async ({url, diaryDate}) => {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new URLSearchParams({ DiaryDate: diaryDate }).toString()
+                });
+                return await res.text();
+            }
+            """,
+            {"url": DIARY_URL, "diaryDate": diary_date},
+        )
+
+        browser.close()
+        return html
+
         page.goto("https://rainbow.myclassboard.com", wait_until="domcontentloaded")
 
 # wait for login form to appear
