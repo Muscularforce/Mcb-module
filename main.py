@@ -17,7 +17,7 @@ notion = Client(auth=NOTION_TOKEN)
 
 
 def today_diary_date():
-    return "17 Mar 2026"
+    return datetime.now().strftime("%d %b %Y")
 
 
 def try_fill_first_matching(locator_list, value):
