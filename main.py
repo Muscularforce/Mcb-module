@@ -255,12 +255,48 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    def send_discord_message(text):
+    try:
+        main()
+    except Exception as e:
+
+        webhook = os.environ["DISCORD_WEBHOOK"]
+
+        error_message = {
+            "content": f"⚠ MyClassboard Automation Failed\n\nError:\n{str(e)}"
+        }
+
+        requests.post(webhook, json=error_message)
+
+        raise
+   def send_discord_message(entry):
     webhook = os.environ["DISCORD_WEBHOOK"]
 
-    data = {
-        "content": text
+    embed = {
+        "title": f"{entry['subject']} — {entry['type']}",
+        "description": entry["summary"],
+        "color": 3447003,
+        "fields": [
+            {
+                "name": "Teacher",
+                "value": entry["teacher"],
+                "inline": True
+            },
+            {
+                "name": "Date",
+                "value": entry["date"],
+                "inline": True
+            }
+        ]
     }
+
+    # Add attachment if present
+    if entry.get("attachment_url"):
+        embed["fields"].append({
+            "name": "Attachment",
+            "value": entry["attachment_url"],
+            "inline": False
+        })
+
+    data = {"embeds": [embed]}
 
     requests.post(webhook, json=data)
