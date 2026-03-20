@@ -268,35 +268,38 @@ if __name__ == "__main__":
         requests.post(webhook, json=error_message)
 
         raise
-   def send_discord_message(entry):
-    webhook = os.environ["DISCORD_WEBHOOK"]
+   
 
-    embed = {
-        "title": f"{entry['subject']} — {entry['type']}",
-        "description": entry["summary"],
-        "color": 3447003,
-        "fields": [
+   def send_discord_message(entry):
+    import requests
+    import os
+
+    webhook = os.getenv("DISCORD_WEBHOOK")
+    if not webhook:
+        print("No Discord webhook set")
+        return
+
+    payload = {
+        "embeds": [
             {
-                "name": "Teacher",
-                "value": entry["teacher"],
-                "inline": True
-            },
-            {
-                "name": "Date",
-                "value": entry["date"],
-                "inline": True
+                "title": f"{entry['subject']} — {entry['type']}",
+                "description": entry["summary"],
+                "color": 3447003,
+                "fields": [
+                    {"name": "Teacher", "value": entry["teacher"], "inline": True},
+                    {"name": "Date", "value": entry["date"], "inline": True}
+                ]
             }
         ]
     }
 
-    # Add attachment if present
     if entry.get("attachment_url"):
-        embed["fields"].append({
-            "name": "Attachment",
-            "value": entry["attachment_url"],
-            "inline": False
-        })
+        payload["embeds"][0]["fields"].append(
+            {
+                "name": "Attachment",
+                "value": entry["attachment_url"],
+                "inline": False
+            }
+        )
 
-    data = {"embeds": [embed]}
-
-    requests.post(webhook, json=data)
+    requests.post(webhook, json=payload)
