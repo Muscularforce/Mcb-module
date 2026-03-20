@@ -1,11 +1,3 @@
-send_discord_message({
-    "subject": "Test",
-    "type": "Automation",
-    "teacher": "System",
-    "summary": "Discord test message from GitHub Actions",
-    "date": datetime.now().strftime("%d %b %Y"),
-    "attachment_url": None,
-})
 import os
 import re
 from datetime import datetime
@@ -259,7 +251,6 @@ def create_notion_page(entry: dict):
 def send_discord_message(entry: dict):
     webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
     if not webhook:
-        print("DISCORD_WEBHOOK is missing")
         return
 
     payload = {
@@ -285,12 +276,14 @@ def send_discord_message(entry: dict):
             }
         )
 
-    r = requests.post(webhook, json=payload, timeout=20)
-    print("Discord status:", r.status_code)
-    print("Discord body:", r.text[:500])
+    try:
+        r = requests.post(webhook, json=payload, timeout=20)
+        print(f"Discord response: {r.status_code}")
+        if r.status_code >= 400:
+            print(r.text)
+    except Exception as e:
+        print(f"Discord notification failed: {e}")
 
-    if r.status_code >= 400:
-        raise RuntimeError(f"Discord webhook failed: {r.status_code} {r.text[:200]}")
 
 def send_discord_error(message: str):
     webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
