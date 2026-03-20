@@ -1,3 +1,11 @@
+send_discord_message({
+    "subject": "Test",
+    "type": "Automation",
+    "teacher": "System",
+    "summary": "Discord test message from GitHub Actions",
+    "date": datetime.now().strftime("%d %b %Y"),
+    "attachment_url": None,
+})
 import os
 import re
 from datetime import datetime
