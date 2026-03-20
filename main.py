@@ -1,10 +1,13 @@
-import requests
 import os
 import re
 from datetime import datetime
+
+import requests
 from bs4 import BeautifulSoup
 from notion_client import Client
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+from notion_client.errors import APIResponseError
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import sync_playwright
 
 PORTAL_URL = "https://rainbow.myclassboard.com"
 DIARY_URL = "https://rainbow.myclassboard.com/StudentERP/StaffDiaryToStudent_CalenderView_AllActivities"
@@ -21,8 +24,12 @@ def today_diary_date():
     return datetime.now().strftime("%d %b %Y")
 
 
-def try_fill_first_matching(locator_list, value):
-    for loc in locator_list:
+def clean_text(text: str) -> str:
+    return re.sub(r"\s+", " ", text or "").strip()
+
+
+def try_fill_first_matching(locators, value):
+    for loc in locators:
         try:
             if loc.count() > 0:
                 loc.first.fill(value)
@@ -39,9 +46,12 @@ def login_and_fetch_html(diary_date: str) -> str:
         page = context.new_page()
 
         page.goto(PORTAL_URL, wait_until="domcontentloaded")
-        page.wait_for_load_state("networkidle")
 
-        # Try a few common login selectors
+        try:
+            page.wait_for_load_state("networkidle", timeout=30000)
+        except PlaywrightTimeoutError:
+            pass
+
         username_candidates = [
             page.locator("input[type='text']"),
             page.locator("input[type='email']"),
@@ -62,7 +72,7 @@ def login_and_fetch_html(diary_date: str) -> str:
         if not filled_user or not filled_pass:
             page.screenshot(path="login_debug.png", full_page=True)
             browser.close()
-            raise RuntimeError("Could not find login fields. Check login_debug.png in the GitHub Actions artifact/logs.")
+            raise RuntimeError("Could not find login fields. Check login_debug.png.")
 
         submit_buttons = page.locator("button, input[type='submit']")
         if submit_buttons.count() > 0:
@@ -96,10 +106,6 @@ def login_and_fetch_html(diary_date: str) -> str:
         return html
 
 
-def clean_text(text: str) -> str:
-    return re.sub(r"\s+", " ", text or "").strip()
-
-
 def extract_entries(html: str, diary_date: str):
     soup = BeautifulSoup(html, "html.parser")
     page_text = clean_text(soup.get_text(" ", strip=True))
@@ -110,7 +116,6 @@ def extract_entries(html: str, diary_date: str):
     entries = []
     current_subject = None
 
-    # Walk through cards in order
     for node in soup.find_all(["h6", "div"]):
         if node.name == "h6":
             subject_span = node.find("span")
@@ -122,7 +127,7 @@ def extract_entries(html: str, diary_date: str):
             teacher = node.find("span", style=lambda s: s and "darkgray" in s)
             summary_div = node.find("div", class_="summery-class")
             submit_btn = node.find("span", onclick=True)
-            attachment_link = node.find("a", onclick=re.compile(r"ViewFile\("))
+            attachment_link = node.find("a", onclick=re.compile(r"ViewFile"))
 
             if not badge or not teacher or not summary_div:
                 continue
@@ -137,7 +142,7 @@ def extract_entries(html: str, diary_date: str):
 
             if submit_btn:
                 onclick = submit_btn.get("onclick", "")
-                m = re.search(r"\((\d+),\s*(-?\d+)\)", onclick)
+                m = re.search(r"\((\d+),\s*(-?\d+)", onclick)
                 if m:
                     diary_id = int(m.group(1))
                     subject_id = int(m.group(2))
@@ -174,14 +179,19 @@ def extract_entries(html: str, diary_date: str):
 
 
 def already_exists(unique_key: str) -> bool:
-    res = notion.databases.query(
-        database_id=NOTION_DATABASE_ID,
-        filter={
-            "property": "Unique Key",
-            "rich_text": {"equals": unique_key},
-        },
-    )
-    return len(res.get("results", [])) > 0
+    try:
+        res = notion.databases.query(
+            database_id=NOTION_DATABASE_ID,
+            filter={
+                "property": "Unique Key",
+                "rich_text": {"equals": unique_key},
+            },
+        )
+        return len(res.get("results", [])) > 0
+    except APIResponseError as e:
+        raise RuntimeError(
+            "Notion database access failed. Check NOTION_DATABASE_ID and database sharing."
+        ) from e
 
 
 def create_notion_page(entry: dict):
@@ -219,87 +229,4 @@ def create_notion_page(entry: dict):
     }
 
     if entry["attachment_url"]:
-        properties["Attachment"] = {"url": entry["attachment_url"]}
-
-    notion.pages.create(
-        parent={"database_id": NOTION_DATABASE_ID},
-        properties=properties,
-    )
-
-
-def main():
-    diary_date = today_diary_date()
-    html = login_and_fetch_html(diary_date)
-    entries = extract_entries(html, diary_date)
-
-    print(f"Found {len(entries)} entries for {diary_date}")
-
-    new_count = 0
-    for entry in entries:
-        if not already_exists(entry["unique_key"]):
-            create_notion_page(entry)
-            new_count += 1
-
-            send_discord_message(
-    f"📚 **New Homework**\n"
-    f"Subject: {entry['subject']}\n"
-    f"Type: {entry['type']}\n"
-    f"Teacher: {entry['teacher']}\n"
-    f"Details: {entry['summary']}"
-)
-            print(f"Added: {entry['subject']} / {entry['type']}")
-        else:
-            print(f"Skipped duplicate: {entry['subject']} / {entry['type']}")
-
-    print(f"Inserted {new_count} new entries")
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-
-        webhook = os.environ["DISCORD_WEBHOOK"]
-
-        error_message = {
-            "content": f"⚠ MyClassboard Automation Failed\n\nError:\n{str(e)}"
-        }
-
-        requests.post(webhook, json=error_message)
-
-        raise
-   
-
-   def send_discord_message(entry):
-    import requests
-    import os
-
-    webhook = os.getenv("DISCORD_WEBHOOK")
-    if not webhook:
-        print("No Discord webhook set")
-        return
-
-    payload = {
-        "embeds": [
-            {
-                "title": f"{entry['subject']} — {entry['type']}",
-                "description": entry["summary"],
-                "color": 3447003,
-                "fields": [
-                    {"name": "Teacher", "value": entry["teacher"], "inline": True},
-                    {"name": "Date", "value": entry["date"], "inline": True}
-                ]
-            }
-        ]
-    }
-
-    if entry.get("attachment_url"):
-        payload["embeds"][0]["fields"].append(
-            {
-                "name": "Attachment",
-                "value": entry["attachment_url"],
-                "inline": False
-            }
-        )
-
-    requests.post(webhook, json=payload)
+        properties["
