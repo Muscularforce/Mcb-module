@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -23,7 +23,7 @@ jobs:
           pip install -r requirements.txt
           playwright install --with-deps chromium
 
-      - name: Run sync
+      - name: Run script
         env:
           MCB_USERNAME: ${{ secrets.MCB_USERNAME }}
           MCB_PASSWORD: ${{ secrets.MCB_PASSWORD }}
