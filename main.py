@@ -9,7 +9,7 @@ from notion_client.errors import APIResponseError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-PORTAL_URL = "https://rainbow.myclassboard.com"
+PORTAL_URL = "https://rainbow.myclassboard.com/StudentERP/Master_Student"
 DIARY_URL = "https://rainbow.myclassboard.com/StudentERP/StaffDiaryToStudent_CalenderView_AllActivities"
 
 NOTION_TOKEN = os.environ["NOTION_TOKEN"]
@@ -42,17 +42,75 @@ def try_fill_first_matching(locators, value) -> bool:
     return False
 
 
+def send_discord_message(content: str = None, entry: dict = None):
+    webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
+    if not webhook:
+        return
+
+    try:
+        if entry is not None:
+            payload = {
+                "embeds": [
+                    {
+                        "title": f"{entry['subject']} — {entry['type']}",
+                        "description": entry["summary"],
+                        "color": 3447003,
+                        "fields": [
+                            {"name": "Teacher", "value": entry["teacher"], "inline": True},
+                            {"name": "Date", "value": entry["date"], "inline": True},
+                        ],
+                    }
+                ]
+            }
+
+            if entry.get("attachment_url"):
+                payload["embeds"][0]["fields"].append(
+                    {
+                        "name": "Attachment",
+                        "value": entry["attachment_url"],
+                        "inline": False,
+                    }
+                )
+        else:
+            payload = {"content": content or ""}
+
+        r = requests.post(webhook, json=payload, timeout=20)
+        print(f"Discord response: {r.status_code}")
+        if r.status_code >= 400:
+            print(r.text[:500])
+    except Exception as e:
+        print(f"Discord notification failed: {e}")
+
+
+def send_discord_error(message: str):
+    webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
+    if not webhook:
+        return
+
+    try:
+        requests.post(
+            webhook,
+            json={"content": f"⚠ MyClassboard automation failed:\n```{message}```"},
+            timeout=20,
+        )
+    except Exception as e:
+        print(f"Discord error alert failed: {e}")
+
+
 def login_and_fetch_html(diary_date: str) -> str:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
 
-        page.goto(PORTAL_URL, wait_until="domcontentloaded")
+        page.set_default_navigation_timeout(120000)
+        page.set_default_timeout(60000)
+
+        page.goto(PORTAL_URL, wait_until="commit", timeout=120000)
 
         try:
-            page.wait_for_load_state("networkidle", timeout=30000)
-        except PlaywrightTimeoutError:
+            page.wait_for_timeout(5000)
+        except Exception:
             pass
 
         username_candidates = [
@@ -77,15 +135,20 @@ def login_and_fetch_html(diary_date: str) -> str:
             browser.close()
             raise RuntimeError("Could not find login fields. Check login_debug.png.")
 
-        submit_buttons = page.locator("button, input[type='submit']")
-        if submit_buttons.count() > 0:
-            submit_buttons.first.click()
+        login_button = page.locator("#LogID")
+
+        if login_button.count() > 0:
+            login_button.evaluate("(el) => el.click()")
         else:
-            page.keyboard.press("Enter")
+            submit_buttons = page.locator("button, input[type='submit']")
+            if submit_buttons.count() > 0:
+                submit_buttons.first.evaluate("(el) => el.click()")
+            else:
+                page.keyboard.press("Enter")
 
         try:
-            page.wait_for_load_state("networkidle", timeout=60000)
-        except PlaywrightTimeoutError:
+            page.wait_for_timeout(5000)
+        except Exception:
             pass
 
         html = page.evaluate(
@@ -248,58 +311,6 @@ def create_notion_page(entry: dict):
     )
 
 
-def send_discord_message(entry: dict):
-    webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
-    if not webhook:
-        return
-
-    payload = {
-        "embeds": [
-            {
-                "title": f"{entry['subject']} — {entry['type']}",
-                "description": entry["summary"],
-                "color": 3447003,
-                "fields": [
-                    {"name": "Teacher", "value": entry["teacher"], "inline": True},
-                    {"name": "Date", "value": entry["date"], "inline": True},
-                ],
-            }
-        ]
-    }
-
-    if entry.get("attachment_url"):
-        payload["embeds"][0]["fields"].append(
-            {
-                "name": "Attachment",
-                "value": entry["attachment_url"],
-                "inline": False,
-            }
-        )
-
-    try:
-        r = requests.post(webhook, json=payload, timeout=20)
-        print(f"Discord response: {r.status_code}")
-        if r.status_code >= 400:
-            print(r.text)
-    except Exception as e:
-        print(f"Discord notification failed: {e}")
-
-
-def send_discord_error(message: str):
-    webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
-    if not webhook:
-        return
-
-    try:
-        requests.post(
-            webhook,
-            json={"content": f"⚠ MyClassboard automation failed:\n```{message}```"},
-            timeout=20,
-        )
-    except Exception as e:
-        print(f"Discord error alert failed: {e}")
-
-
 def main():
     notion_database_reachable()
 
@@ -313,13 +324,15 @@ def main():
     for entry in entries:
         if not already_exists(entry["unique_key"]):
             create_notion_page(entry)
-            send_discord_message(entry)
+            send_discord_message(entry=entry)
             new_count += 1
             print(f"Added: {entry['subject']} / {entry['type']}")
         else:
             print(f"Skipped duplicate: {entry['subject']} / {entry['type']}")
 
-    print(f"Inserted {new_count} new entries")
+    summary = f"Diary checked for {diary_date}. Found {len(entries)} entries. Added {new_count} new entries."
+    print(summary)
+    send_discord_message(content=summary)
 
 
 if __name__ == "__main__":
