@@ -9,7 +9,12 @@ from notion_client.errors import APIResponseError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
-PORTAL_URL = "https://rainbow.myclassboard.com/StudentERP/Master_Student"
+PORTAL_URLS = [
+    "https://rainbow.myclassboard.com/StudentERP/Master_Student",
+    "https://rainbow.myclassboard.com/StudentERP/Master_Student/",
+    "https://rainbow.myclassboard.com/",
+]
+
 DIARY_URL = "https://rainbow.myclassboard.com/StudentERP/StaffDiaryToStudent_CalenderView_AllActivities"
 
 NOTION_TOKEN = os.environ["NOTION_TOKEN"]
@@ -97,14 +102,31 @@ def send_discord_error(message: str):
         print(f"Discord error alert failed: {e}")
 
 
-def find_login_frame(page):
-    for frame in page.frames:
+def find_visible_match(scope, selectors):
+    for selector in selectors:
         try:
-            if frame.locator("input[type='password']").count() > 0:
-                return frame
+            loc = scope.locator(selector)
+            if loc.count() > 0:
+                for i in range(min(loc.count(), 5)):
+                    item = loc.nth(i)
+                    try:
+                        if item.is_visible():
+                            return item
+                    except Exception:
+                        pass
         except Exception:
             pass
     return None
+
+
+def find_login_scope(page):
+    for frame in page.frames:
+        try:
+            if frame.locator("input").count() > 0:
+                return frame
+        except Exception:
+            pass
+    return page
 
 
 def login_and_fetch_html(diary_date: str) -> str:
@@ -116,56 +138,83 @@ def login_and_fetch_html(diary_date: str) -> str:
         page.set_default_navigation_timeout(180000)
         page.set_default_timeout(60000)
 
-        page.goto(PORTAL_URL, wait_until="commit", timeout=180000)
-        page.wait_for_timeout(10000)
+        loaded = False
+        for url in PORTAL_URLS:
+            try:
+                page.goto(url, wait_until="commit", timeout=180000)
+                loaded = True
+                break
+            except Exception:
+                continue
 
-        target_frame = find_login_frame(page)
+        if not loaded:
+            browser.close()
+            raise RuntimeError("Could not open the MyClassboard portal.")
 
-        if target_frame is None:
+        page.wait_for_timeout(12000)
+
+        scope = find_login_scope(page)
+
+        username_selectors = [
+            "input#txtUserName",
+            "input#txtUsername",
+            "input#txtUser",
+            "input#username",
+            "input#UserName",
+            "input#LoginID",
+            "input#txtLoginId",
+            "input#txtEmail",
+            "input[type='text']",
+            "input[type='email']",
+            "input[placeholder*='user' i]",
+            "input[placeholder*='username' i]",
+            "input[name*='user' i]",
+            "input[id*='user' i]",
+            "input[name*='login' i]",
+            "input[id*='login' i]",
+        ]
+
+        password_selectors = [
+            "input#txtPassword",
+            "input#txtPass",
+            "input#txtPwd",
+            "input#password",
+            "input#Password",
+            "input[type='password']",
+            "input[placeholder*='pass' i]",
+            "input[name*='pass' i]",
+            "input[id*='pass' i]",
+        ]
+
+        username_field = find_visible_match(scope, username_selectors)
+        password_field = find_visible_match(scope, password_selectors)
+
+        if username_field is None or password_field is None:
             page.screenshot(path="login_debug.png", full_page=True)
-            html = page.content()
             with open("login_debug.html", "w", encoding="utf-8") as f:
-                f.write(html)
+                f.write(page.content())
             browser.close()
             raise RuntimeError("Could not find login fields. Check login_debug.png.")
 
-        username_candidates = [
-            target_frame.locator("input[type='text']"),
-            target_frame.locator("input[type='email']"),
-            target_frame.locator("input[name*='user' i]"),
-            target_frame.locator("input[id*='user' i]"),
-            target_frame.locator("input[id*='login' i]"),
+        username_field.fill(MCB_USERNAME)
+        password_field.fill(MCB_PASSWORD)
+
+        login_selectors = [
+            "#LogID",
+            "#btnLogin",
+            "button:has-text('Login')",
+            "button:has-text('Sign In')",
+            "input[type='submit']",
+            "button[type='submit']",
         ]
 
-        password_candidates = [
-            target_frame.locator("input[type='password']"),
-            target_frame.locator("input[name*='pass' i]"),
-            target_frame.locator("input[id*='pass' i]"),
-        ]
-
-        filled_user = try_fill_first_matching(username_candidates, MCB_USERNAME)
-        filled_pass = try_fill_first_matching(password_candidates, MCB_PASSWORD)
-
-        if not filled_user or not filled_pass:
-            page.screenshot(path="login_debug.png", full_page=True)
-            html = page.content()
-            with open("login_debug.html", "w", encoding="utf-8") as f:
-                f.write(html)
-            browser.close()
-            raise RuntimeError("Could not find login fields. Check login_debug.png.")
-
-        login_button = target_frame.locator("#LogID")
-
-        if login_button.count() > 0:
+        login_button = find_visible_match(scope, login_selectors)
+        if login_button is not None:
             login_button.evaluate("(el) => el.click()")
         else:
-            submit_buttons = target_frame.locator("button, input[type='submit']")
-            if submit_buttons.count() > 0:
-                submit_buttons.first.evaluate("(el) => el.click()")
-            else:
-                target_frame.keyboard.press("Enter")
+            scope.keyboard.press("Enter")
 
-        page.wait_for_timeout(8000)
+        page.wait_for_timeout(10000)
 
         html = page.evaluate(
             """
@@ -290,32 +339,18 @@ def create_notion_page(entry: dict):
         title = f"{title} - {entry['summary'][:40]}"
 
     properties = {
-        "Name": {
-            "title": [{"text": {"content": title}}],
-        },
-        "Subject": {
-            "select": {"name": entry["subject"]},
-        },
-        "Type": {
-            "select": {"name": entry["type"]},
-        },
-        "Teacher": {
-            "rich_text": [{"text": {"content": entry["teacher"]}}],
-        },
+        "Name": {"title": [{"text": {"content": title}}]},
+        "Subject": {"select": {"name": entry["subject"]}},
+        "Type": {"select": {"name": entry["type"]}},
+        "Teacher": {"rich_text": [{"text": {"content": entry["teacher"]}}]},
         "Date": {
             "date": {
                 "start": datetime.strptime(entry["date"], "%d %b %Y").date().isoformat()
             }
         },
-        "Summary": {
-            "rich_text": [{"text": {"content": entry["summary"]}}],
-        },
-        "Diary ID": {
-            "number": entry["diary_id"] if entry["diary_id"] is not None else 0,
-        },
-        "Unique Key": {
-            "rich_text": [{"text": {"content": entry["unique_key"]}}],
-        },
+        "Summary": {"rich_text": [{"text": {"content": entry["summary"]}}]},
+        "Diary ID": {"number": entry["diary_id"] if entry["diary_id"] is not None else 0},
+        "Unique Key": {"rich_text": [{"text": {"content": entry["unique_key"]}}]},
     }
 
     if entry["attachment_url"]:
