@@ -97,34 +97,50 @@ def send_discord_error(message: str):
         print(f"Discord error alert failed: {e}")
 
 
+def find_login_frame(page):
+    for frame in page.frames:
+        try:
+            if frame.locator("input[type='password']").count() > 0:
+                return frame
+        except Exception:
+            pass
+    return None
+
+
 def login_and_fetch_html(diary_date: str) -> str:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
 
-        page.set_default_navigation_timeout(120000)
+        page.set_default_navigation_timeout(180000)
         page.set_default_timeout(60000)
 
-        page.goto(PORTAL_URL, wait_until="commit", timeout=120000)
+        page.goto(PORTAL_URL, wait_until="commit", timeout=180000)
+        page.wait_for_timeout(10000)
 
-        try:
-            page.wait_for_timeout(5000)
-        except Exception:
-            pass
+        target_frame = find_login_frame(page)
+
+        if target_frame is None:
+            page.screenshot(path="login_debug.png", full_page=True)
+            html = page.content()
+            with open("login_debug.html", "w", encoding="utf-8") as f:
+                f.write(html)
+            browser.close()
+            raise RuntimeError("Could not find login fields. Check login_debug.png.")
 
         username_candidates = [
-            page.locator("input[type='text']"),
-            page.locator("input[type='email']"),
-            page.locator("input[name*='user' i]"),
-            page.locator("input[id*='user' i]"),
-            page.locator("input[id*='login' i]"),
+            target_frame.locator("input[type='text']"),
+            target_frame.locator("input[type='email']"),
+            target_frame.locator("input[name*='user' i]"),
+            target_frame.locator("input[id*='user' i]"),
+            target_frame.locator("input[id*='login' i]"),
         ]
 
         password_candidates = [
-            page.locator("input[type='password']"),
-            page.locator("input[name*='pass' i]"),
-            page.locator("input[id*='pass' i]"),
+            target_frame.locator("input[type='password']"),
+            target_frame.locator("input[name*='pass' i]"),
+            target_frame.locator("input[id*='pass' i]"),
         ]
 
         filled_user = try_fill_first_matching(username_candidates, MCB_USERNAME)
@@ -132,24 +148,24 @@ def login_and_fetch_html(diary_date: str) -> str:
 
         if not filled_user or not filled_pass:
             page.screenshot(path="login_debug.png", full_page=True)
+            html = page.content()
+            with open("login_debug.html", "w", encoding="utf-8") as f:
+                f.write(html)
             browser.close()
             raise RuntimeError("Could not find login fields. Check login_debug.png.")
 
-        login_button = page.locator("#LogID")
+        login_button = target_frame.locator("#LogID")
 
         if login_button.count() > 0:
             login_button.evaluate("(el) => el.click()")
         else:
-            submit_buttons = page.locator("button, input[type='submit']")
+            submit_buttons = target_frame.locator("button, input[type='submit']")
             if submit_buttons.count() > 0:
                 submit_buttons.first.evaluate("(el) => el.click()")
             else:
-                page.keyboard.press("Enter")
+                target_frame.keyboard.press("Enter")
 
-        try:
-            page.wait_for_timeout(5000)
-        except Exception:
-            pass
+        page.wait_for_timeout(8000)
 
         html = page.evaluate(
             """
