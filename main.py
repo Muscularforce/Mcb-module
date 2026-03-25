@@ -206,6 +206,26 @@ def login_and_fetch_html(diary_date: str) -> str:
 
         page.wait_for_timeout(12000)
 
+        # Sometimes the portal lands on a generic error screen with a single
+        # "Click here to Login" button (no username/password inputs yet).
+        # Handle that by clicking through, then retry login-field detection.
+        for _ in range(3):
+            try:
+                if page.locator("text=Oops Something went wrong!").count() > 0:
+                    login_link_selectors = [
+                        "text=Click here to Login",
+                        "button:has-text('Click here to Login')",
+                        "a:has-text('Click here to Login')",
+                    ]
+                    login_link = find_first_match(page, login_link_selectors)
+                    if login_link is not None:
+                        login_link.evaluate("(el) => el.click()")
+                        page.wait_for_timeout(8000)
+                        continue
+            except Exception:
+                pass
+            break
+
         scope = find_login_scope(page)
 
         username_selectors = [
