@@ -32,3 +32,12 @@ jobs:
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: python main.py
+
+      - name: Upload login debug artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: login-debug
+          path: |
+            ${{ github.workspace }}/login_debug.png
+            ${{ github.workspace }}/login_debug.html

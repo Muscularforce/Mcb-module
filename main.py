@@ -54,7 +54,17 @@ def try_fill_first_matching(locators, value) -> bool:
     for loc in locators:
         try:
             if loc.count() > 0:
-                loc.first.fill(value)
+                target = loc.first
+                # Make Playwright less sensitive to DOM/layout differences.
+                try:
+                    target.scroll_into_view_if_needed()
+                except Exception:
+                    pass
+                try:
+                    target.click(timeout=3000)
+                except Exception:
+                    pass
+                target.fill(value)
                 return True
         except Exception:
             pass
@@ -133,6 +143,18 @@ def find_visible_match(scope, selectors):
     return None
 
 
+def find_first_match(scope, selectors):
+    """Return the first attached match (no visibility requirement)."""
+    for selector in selectors:
+        try:
+            loc = scope.locator(selector)
+            if loc.count() > 0:
+                return loc.first
+        except Exception:
+            pass
+    return None
+
+
 def find_login_scope(page):
     """
     Try to locate the iframe that contains the login form.
@@ -197,6 +219,11 @@ def login_and_fetch_html(diary_date: str) -> str:
             "input#txtEmail",
             "input[type='text']",
             "input[type='email']",
+            "input[autocomplete='username' i]",
+            "input[autocomplete='email' i]",
+            "input[aria-label*='user' i]",
+            "input[aria-label*='email' i]",
+            "input[aria-label*='login' i]",
             "input[placeholder*='user' i]",
             "input[placeholder*='username' i]",
             "input[name*='user' i]",
@@ -212,20 +239,38 @@ def login_and_fetch_html(diary_date: str) -> str:
             "input#password",
             "input#Password",
             "input[type='password']",
+            "input[autocomplete='current-password' i]",
+            "input[aria-label*='password' i]",
             "input[placeholder*='pass' i]",
             "input[name*='pass' i]",
             "input[id*='pass' i]",
         ]
 
-        username_field = find_visible_match(scope, username_selectors)
-        password_field = find_visible_match(scope, password_selectors)
+        scope_used = None
+        # Try the guessed scope first, then fall back to page + all iframes.
+        # Some portals render an outer page with multiple inputs/iframes before
+        # the real login iframe becomes visible.
+        scope_candidates = [scope, page] + list(page.frames)
+        seen = set()
+        unique_scopes = []
+        for s in scope_candidates:
+            if id(s) in seen:
+                continue
+            seen.add(id(s))
+            unique_scopes.append(s)
 
-        # If we guessed the wrong scope iframe, retry using the main page.
-        if username_field is None or password_field is None:
-            username_field = find_visible_match(page, username_selectors)
-            password_field = find_visible_match(page, password_selectors)
+        for candidate in unique_scopes:
+            username_locators = [candidate.locator(sel) for sel in username_selectors]
+            password_locators = [candidate.locator(sel) for sel in password_selectors]
 
-        if username_field is None or password_field is None:
+            username_ok = try_fill_first_matching(username_locators, MCB_USERNAME)
+            password_ok = try_fill_first_matching(password_locators, MCB_PASSWORD)
+
+            if username_ok and password_ok:
+                scope_used = candidate
+                break
+
+        if scope_used is None:
             script_dir = os.path.dirname(os.path.abspath(__file__))
             debug_png_path = os.path.join(script_dir, "login_debug.png")
             debug_html_path = os.path.join(script_dir, "login_debug.html")
@@ -234,9 +279,6 @@ def login_and_fetch_html(diary_date: str) -> str:
                 f.write(page.content())
             browser.close()
             raise RuntimeError("Could not find login fields. Check login_debug.png.")
-
-        username_field.fill(MCB_USERNAME)
-        password_field.fill(MCB_PASSWORD)
 
         login_selectors = [
             "#LogID",
@@ -247,11 +289,11 @@ def login_and_fetch_html(diary_date: str) -> str:
             "button[type='submit']",
         ]
 
-        login_button = find_visible_match(scope, login_selectors)
+        login_button = find_first_match(scope_used, login_selectors)
         if login_button is not None:
             login_button.evaluate("(el) => el.click()")
         else:
-            scope.keyboard.press("Enter")
+            page.keyboard.press("Enter")
 
         page.wait_for_timeout(10000)
 
