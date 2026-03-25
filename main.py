@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 
 import requests
+from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from notion_client import Client
 from notion_client.errors import APIResponseError
@@ -17,10 +18,23 @@ PORTAL_URLS = [
 
 DIARY_URL = "https://rainbow.myclassboard.com/StudentERP/StaffDiaryToStudent_CalenderView_AllActivities"
 
-NOTION_TOKEN = os.environ["NOTION_TOKEN"]
-NOTION_DATABASE_ID = os.environ["NOTION_DATABASE_ID"]
-MCB_USERNAME = os.environ["MCB_USERNAME"]
-MCB_PASSWORD = os.environ["MCB_PASSWORD"]
+load_dotenv()
+
+
+def require_env(name: str) -> str:
+    val = os.getenv(name)
+    if not val:
+        raise RuntimeError(
+            f"Missing required environment variable: {name}. "
+            f"Set it in your environment or create a .env file in this project folder."
+        )
+    return val
+
+
+NOTION_TOKEN = require_env("NOTION_TOKEN")
+NOTION_DATABASE_ID = require_env("NOTION_DATABASE_ID")
+MCB_USERNAME = require_env("MCB_USERNAME")
+MCB_PASSWORD = require_env("MCB_PASSWORD")
 
 notion = Client(auth=NOTION_TOKEN)
 
@@ -120,9 +134,26 @@ def find_visible_match(scope, selectors):
 
 
 def find_login_scope(page):
+    """
+    Try to locate the iframe that contains the login form.
+
+    The previous implementation returned the first frame that had *any* inputs,
+    which can cause us to search the wrong frame for username/password fields.
+    """
+    password_hint_selectors = [
+        "input[type='password']",
+        "input#txtPassword",
+        "input#txtPass",
+        "input#txtPwd",
+        "input[id*='pass' i]",
+        "input[name*='pass' i]",
+        "input[placeholder*='pass' i]",
+        "input[placeholder*='pwd' i]",
+    ]
+
     for frame in page.frames:
         try:
-            if frame.locator("input").count() > 0:
+            if any(frame.locator(sel).count() > 0 for sel in password_hint_selectors):
                 return frame
         except Exception:
             pass
@@ -189,9 +220,17 @@ def login_and_fetch_html(diary_date: str) -> str:
         username_field = find_visible_match(scope, username_selectors)
         password_field = find_visible_match(scope, password_selectors)
 
+        # If we guessed the wrong scope iframe, retry using the main page.
         if username_field is None or password_field is None:
-            page.screenshot(path="login_debug.png", full_page=True)
-            with open("login_debug.html", "w", encoding="utf-8") as f:
+            username_field = find_visible_match(page, username_selectors)
+            password_field = find_visible_match(page, password_selectors)
+
+        if username_field is None or password_field is None:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            debug_png_path = os.path.join(script_dir, "login_debug.png")
+            debug_html_path = os.path.join(script_dir, "login_debug.html")
+            page.screenshot(path=debug_png_path, full_page=True)
+            with open(debug_html_path, "w", encoding="utf-8") as f:
                 f.write(page.content())
             browser.close()
             raise RuntimeError("Could not find login fields. Check login_debug.png.")
