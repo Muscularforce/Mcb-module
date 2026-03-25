@@ -50,21 +50,43 @@ def clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", text or "").strip()
 
 
+def set_input_value(input_locator, value: str) -> bool:
+    """
+    Best-effort input fill.
+
+    Sometimes inputs exist in the DOM but aren't considered "visible" by Playwright
+    (common with SSO pages / dynamic render). We first try normal .fill(), and
+    if that fails, we set the value via JS and trigger input/change events.
+    """
+    try:
+        target = input_locator.first
+        try:
+            target.scroll_into_view_if_needed()
+        except Exception:
+            pass
+        try:
+            target.click(timeout=3000)
+        except Exception:
+            pass
+        target.fill(value)
+        return True
+    except Exception:
+        try:
+            input_locator.first.evaluate(
+                "(el, val) => { el.focus(); el.value = ''; el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }",
+                value,
+            )
+            return True
+        except Exception:
+            return False
+
+
 def try_fill_first_matching(locators, value) -> bool:
     for loc in locators:
         try:
             if loc.count() > 0:
-                target = loc.first
-                # Make Playwright less sensitive to DOM/layout differences.
-                try:
-                    target.scroll_into_view_if_needed()
-                except Exception:
-                    pass
-                try:
-                    target.click(timeout=3000)
-                except Exception:
-                    pass
-                target.fill(value)
+                if set_input_value(loc, value):
+                    return True
                 return True
         except Exception:
             pass
@@ -211,17 +233,31 @@ def login_and_fetch_html(diary_date: str) -> str:
         # Handle that by clicking through, then retry login-field detection.
         for _ in range(3):
             try:
-                if page.locator("text=Oops Something went wrong!").count() > 0:
-                    login_link_selectors = [
-                        "text=Click here to Login",
-                        "button:has-text('Click here to Login')",
-                        "a:has-text('Click here to Login')",
-                    ]
-                    login_link = find_first_match(page, login_link_selectors)
-                    if login_link is not None:
+                # Don't depend on exact error text/spacing; rely on the button itself.
+                login_link_selectors = [
+                    "text=Click here to Login",
+                    "button:has-text('Click here to Login')",
+                    "a:has-text('Click here to Login')",
+                ]
+                login_link = find_first_match(page, login_link_selectors)
+                if login_link is not None:
+                    try:
+                        login_link.click(timeout=15000)
+                    except Exception:
+                        # Best-effort fallback in case the element isn't "actionable"
                         login_link.evaluate("(el) => el.click()")
-                        page.wait_for_timeout(8000)
-                        continue
+
+                    # Wait for SSO login inputs to appear (the click usually
+                    # redirects to ssolive.myclassboard.com /Account/Login).
+                    for __ in range(20):
+                        try:
+                            if page.locator("input[type='password']").count() > 0:
+                                break
+                        except Exception:
+                            pass
+                        page.wait_for_timeout(1000)
+                    page.wait_for_timeout(2000)
+                    continue
             except Exception:
                 pass
             break
