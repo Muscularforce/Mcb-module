@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import datetime
+from urllib.parse import urljoin
 
 import requests
 from dotenv import load_dotenv
@@ -17,6 +18,7 @@ PORTAL_URLS = [
 ]
 
 DIARY_URL = "https://rainbow.myclassboard.com/StudentERP/StaffDiaryToStudent_CalenderView_AllActivities"
+PORTAL_BASE_URL = "https://rainbow.myclassboard.com"
 
 load_dotenv()
 
@@ -421,9 +423,19 @@ def extract_entries(html: str, diary_date: str):
             if attachment_link:
                 attachment_name = clean_text(attachment_link.get_text(" ", strip=True))
                 onclick = attachment_link.get("onclick", "")
-                m = re.search(r"ViewFile\('([^']+)'\s*,\s*'([^']+)'", onclick)
-                if m:
-                    attachment_url = m.group(2)
+                # MCB's ViewFile(...) argument order can vary, so parse all
+                # quoted args and pick the one that looks like a file URL/path.
+                args = re.findall(r"'([^']*)'", onclick)
+                for arg in args:
+                    candidate = clean_text(arg)
+                    if not candidate:
+                        continue
+                    if any(
+                        token in candidate.lower()
+                        for token in [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".jpg", ".jpeg", ".png", ".zip", "/uploads/", "download", "file"]
+                    ):
+                        attachment_url = urljoin(PORTAL_BASE_URL, candidate)
+                        break
 
             unique_key = f"{diary_date}|{current_subject}|{entry_type}|{diary_id}|{subject_id}|{summary[:80]}"
 
@@ -512,7 +524,6 @@ def main():
     for entry in entries:
         if not already_exists(entry["unique_key"]):
             create_notion_page(entry)
-            send_discord_message(entry=entry)
             new_count += 1
             print(f"Added: {entry['subject']} / {entry['type']}")
         else:
@@ -520,7 +531,6 @@ def main():
 
     summary = f"Diary checked for {diary_date}. Found {len(entries)} entries. Added {new_count} new entries."
     print(summary)
-    send_discord_message(content=summary)
 
 
 if __name__ == "__main__":
