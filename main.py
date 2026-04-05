@@ -141,11 +141,11 @@ def send_discord_error(message: str):
         return
 
     try:
-        requests.post(
-            webhook,
-            json={"content": f"⚠ MyClassboard automation failed:\n```{message}```"},
-            timeout=20,
-        )
+        text = (message or "").strip()
+        if len(text) > 1800:
+            text = text[:1800] + "…"
+        content = f"⚠ MyClassboard automation failed:\n{text}"
+        requests.post(webhook, json={"content": content}, timeout=20)
     except Exception as e:
         print(f"Discord error alert failed: {e}")
 
@@ -524,6 +524,7 @@ def main():
     for entry in entries:
         if not already_exists(entry["unique_key"]):
             create_notion_page(entry)
+            send_discord_message(entry=entry)
             new_count += 1
             print(f"Added: {entry['subject']} / {entry['type']}")
         else:
@@ -531,6 +532,7 @@ def main():
 
     summary = f"Diary checked for {diary_date}. Found {len(entries)} entries. Added {new_count} new entries."
     print(summary)
+    send_discord_message(content=summary)
 
 
 if __name__ == "__main__":
