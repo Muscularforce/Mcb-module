@@ -1,14 +1,14 @@
+import mimetypes
 import os
 import re
 from datetime import datetime
-from urllib.parse import urljoin
+from urllib.parse import unquote, urljoin
 
 import requests
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from notion_client import Client
 from notion_client.errors import APIResponseError
-from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 PORTAL_URLS = [
@@ -19,6 +19,10 @@ PORTAL_URLS = [
 
 DIARY_URL = "https://rainbow.myclassboard.com/StudentERP/StaffDiaryToStudent_CalenderView_AllActivities"
 PORTAL_BASE_URL = "https://rainbow.myclassboard.com"
+
+# Notion file uploads require a recent API version (separate from notion-client defaults).
+NOTION_FILE_API_VERSION = "2026-03-11"
+NOTION_MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 load_dotenv()
 
@@ -50,6 +54,207 @@ def get_diary_date() -> str:
 
 def clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", text or "").strip()
+
+
+def _score_attachment_candidate(s: str) -> int:
+    low = s.lower().replace("\\", "/")
+    score = 0
+    if low.startswith("http://") or low.startswith("https://"):
+        score += 25
+    if "studenterp" in low:
+        score += 18
+    if "/upload" in low or "uploads" in low or "download" in low or "/content/" in low:
+        score += 12
+    if "/" in s:
+        score += 10
+    for ext in (
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".zip",
+    ):
+        if low.endswith(ext) or f"{ext}?" in low or f"{ext}#" in low:
+            score += 8
+            break
+    if re.match(r"^[a-z0-9_.-]+$", low, re.I) and "." in s:
+        score += 3
+    return score
+
+
+def _attachment_url_from_view_file_onclick(onclick: str) -> str | None:
+    if not onclick or "viewfile" not in onclick.lower():
+        return None
+    args = re.findall(r"""['"]([^'"]*)['"]""", onclick)
+    best = None
+    best_score = -1
+    for raw in args:
+        candidate = clean_text(raw)
+        if not candidate:
+            continue
+        low = candidate.lower()
+        if low.startswith(("javascript:", "void", "#")):
+            continue
+        sc = _score_attachment_candidate(candidate)
+        if sc > best_score:
+            best_score = sc
+            best = candidate
+    if best is None or best_score < 1:
+        return None
+    if best.lower().startswith("http://") or best.lower().startswith("https://"):
+        return best
+    return urljoin(PORTAL_BASE_URL, best)
+
+
+def _parse_attachment_link(attachment_link) -> tuple[str | None, str | None]:
+    if not attachment_link:
+        return None, None
+    name = clean_text(attachment_link.get_text(" ", strip=True)) or None
+    href = (attachment_link.get("href") or "").strip()
+    if href and not href.lower().startswith(("javascript:", "#", "void")):
+        href = unquote(href.split("#")[0])
+        abs_url = urljoin(PORTAL_BASE_URL, href)
+        if abs_url.lower().startswith("http"):
+            return name, abs_url
+    onclick = attachment_link.get("onclick") or ""
+    return name, _attachment_url_from_view_file_onclick(onclick)
+
+
+def _is_probably_html_response(body: bytes, content_type: str) -> bool:
+    ct = (content_type or "").split(";")[0].strip().lower()
+    if ct == "text/html":
+        return True
+    head = body.lstrip()[:200].lower()
+    return head.startswith(b"<!doctype") or head.startswith(b"<html")
+
+
+def _safe_attachment_filename(entry: dict, source_url: str, content_type: str) -> str:
+    name = (entry.get("attachment_name") or "").strip()
+    name = re.sub(r'[<>:"/\\|?*]', "_", name)
+    name = name.strip(" .") or ""
+    if not name or len(name) > 180:
+        path = source_url.split("?", 1)[0].rstrip("/").split("/")[-1]
+        path = unquote(path)
+        path = re.sub(r'[<>:"/\\|?*]', "_", path)
+        if path and len(path) <= 180:
+            name = path
+    if not name:
+        ext = mimetypes.guess_extension((content_type or "").split(";")[0].strip()) or ".bin"
+        name = f"attachment{ext}"
+    if "." not in name:
+        ext = mimetypes.guess_extension((content_type or "").split(";")[0].strip()) or ""
+        if ext:
+            name = f"{name}{ext}"
+    return name[:200]
+
+
+def _try_download_mcb_attachment(request, entry: dict) -> None:
+    url = entry.get("attachment_url")
+    if not url:
+        return
+    try:
+        resp = request.get(
+            url,
+            max_redirects=10,
+            timeout=120_000,
+            headers={"Referer": f"{PORTAL_BASE_URL}/"},
+        )
+        if resp.status != 200:
+            print(f"Attachment fetch HTTP {resp.status} for {url[:120]}")
+            return
+        body = resp.body()
+        if not body or len(body) < 32:
+            return
+        ct = (resp.headers.get("content-type") or "").split(";")[0].strip()
+        if _is_probably_html_response(body, ct):
+            print("Attachment fetch returned HTML (session or URL issue); skipping Notion upload.")
+            return
+        if len(body) > NOTION_MAX_UPLOAD_BYTES:
+            print("Attachment larger than 20MB; skipping Notion upload (MCB URL kept).")
+            return
+        filename = _safe_attachment_filename(entry, url, ct)
+        if not ct or ct == "application/octet-stream":
+            guessed, _ = mimetypes.guess_type(filename)
+            if guessed:
+                ct = guessed
+        entry["_attachment_download"] = {
+            "bytes": body,
+            "content_type": ct or "application/octet-stream",
+            "filename": filename,
+        }
+    except Exception as e:
+        print(f"Attachment download failed: {e}")
+
+
+def _notion_block_for_upload(file_upload_id: str, content_type: str) -> dict:
+    ct = (content_type or "").split(";")[0].strip().lower()
+    if ct in ("application/pdf", "application/x-pdf"):
+        return {
+            "object": "block",
+            "type": "pdf",
+            "pdf": {
+                "type": "file_upload",
+                "file_upload": {"id": file_upload_id},
+            },
+        }
+    if ct.startswith("image/"):
+        return {
+            "object": "block",
+            "type": "image",
+            "image": {
+                "caption": [],
+                "type": "file_upload",
+                "file_upload": {"id": file_upload_id},
+            },
+        }
+    return {
+        "object": "block",
+        "type": "file",
+        "file": {
+            "type": "file_upload",
+            "file_upload": {"id": file_upload_id},
+        },
+    }
+
+
+def upload_attachment_bytes_to_notion(data: bytes, filename: str, content_type: str) -> str:
+    if len(data) > NOTION_MAX_UPLOAD_BYTES:
+        raise RuntimeError("Attachment exceeds Notion 20MB upload limit.")
+
+    headers = {
+        "Authorization": f"Bearer {NOTION_TOKEN}",
+        "Notion-Version": NOTION_FILE_API_VERSION,
+    }
+    create = requests.post(
+        "https://api.notion.com/v1/file_uploads",
+        headers={**headers, "Content-Type": "application/json"},
+        json={"filename": filename, "content_type": content_type or "application/octet-stream"},
+        timeout=120,
+    )
+    if create.status_code != 200:
+        raise RuntimeError(
+            f"Notion file_uploads create failed ({create.status_code}): {create.text[:800]}"
+        )
+    meta = create.json()
+    file_upload_id = meta["id"]
+    send_url = meta.get("upload_url") or f"https://api.notion.com/v1/file_uploads/{file_upload_id}/send"
+    send = requests.post(
+        send_url,
+        headers=headers,
+        files={"file": (filename, data, content_type or "application/octet-stream")},
+        timeout=120,
+    )
+    if send.status_code != 200:
+        raise RuntimeError(
+            f"Notion file upload send failed ({send.status_code}): {send.text[:800]}"
+        )
+    return file_upload_id
 
 
 def set_input_value(input_locator, value: str) -> bool:
@@ -206,7 +411,7 @@ def find_login_scope(page):
     return page
 
 
-def login_and_fetch_html(diary_date: str) -> str:
+def fetch_diary_entries(diary_date: str):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context()
@@ -372,8 +577,17 @@ def login_and_fetch_html(diary_date: str) -> str:
             {"url": DIARY_URL, "diaryDate": diary_date},
         )
 
+        entries = extract_entries(html, diary_date)
+        req = context.request
+        for entry in entries:
+            if not entry.get("attachment_url"):
+                continue
+            if already_exists(entry["unique_key"]):
+                continue
+            _try_download_mcb_attachment(req, entry)
+
         browser.close()
-        return html
+        return entries
 
 
 def extract_entries(html: str, diary_date: str):
@@ -399,7 +613,19 @@ def extract_entries(html: str, diary_date: str):
             teacher = node.find("span", style=lambda s: s and "darkgray" in s)
             summary_div = node.find("div", class_="summery-class")
             submit_btn = node.find("span", onclick=True)
-            attachment_link = node.find("a", onclick=re.compile(r"ViewFile\("))
+            attachment_link = node.find("a", onclick=re.compile(r"ViewFile\(", re.I))
+            if not attachment_link:
+                for a in node.find_all("a", href=True):
+                    h = (a.get("href") or "").strip()
+                    if not h or h.lower().startswith("javascript:"):
+                        continue
+                    if re.search(
+                        r"\.(pdf|doc|docx|xls|xlsx|ppt|pptx?|jpe?g|png|gif|zip)(\?|#|$)",
+                        h,
+                        re.I,
+                    ):
+                        attachment_link = a
+                        break
 
             if not badge or not teacher or not summary_div:
                 continue
@@ -421,21 +647,7 @@ def extract_entries(html: str, diary_date: str):
             attachment_name = None
             attachment_url = None
             if attachment_link:
-                attachment_name = clean_text(attachment_link.get_text(" ", strip=True))
-                onclick = attachment_link.get("onclick", "")
-                # MCB's ViewFile(...) argument order can vary, so parse all
-                # quoted args and pick the one that looks like a file URL/path.
-                args = re.findall(r"'([^']*)'", onclick)
-                for arg in args:
-                    candidate = clean_text(arg)
-                    if not candidate:
-                        continue
-                    if any(
-                        token in candidate.lower()
-                        for token in [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".jpg", ".jpeg", ".png", ".zip", "/uploads/", "download", "file"]
-                    ):
-                        attachment_url = urljoin(PORTAL_BASE_URL, candidate)
-                        break
+                attachment_name, attachment_url = _parse_attachment_link(attachment_link)
 
             unique_key = f"{diary_date}|{current_subject}|{entry_type}|{diary_id}|{subject_id}|{summary[:80]}"
 
@@ -482,7 +694,12 @@ def already_exists(unique_key: str) -> bool:
         ) from e
 
 
-def create_notion_page(entry: dict):
+def create_notion_page(
+    entry: dict,
+    *,
+    notion_file_upload_id: str | None = None,
+    notion_upload_content_type: str | None = None,
+):
     title = f"{entry['subject']} - {entry['type']}"
     if entry["summary"]:
         title = f"{title} - {entry['summary'][:40]}"
@@ -502,28 +719,57 @@ def create_notion_page(entry: dict):
         "Unique Key": {"rich_text": [{"text": {"content": entry["unique_key"]}}]},
     }
 
-    if entry["attachment_url"]:
+    # MCB attachment URLs usually require portal cookies; a plain URL in Notion often errors.
+    # When upload succeeds, attach the file as a page block and omit the URL property.
+    if entry.get("attachment_url") and not notion_file_upload_id:
         properties["Attachment"] = {"url": entry["attachment_url"]}
 
-    notion.pages.create(
-        parent={"database_id": NOTION_DATABASE_ID},
-        properties=properties,
-    )
+    children = []
+    if notion_file_upload_id:
+        children.append(
+            _notion_block_for_upload(
+                notion_file_upload_id,
+                notion_upload_content_type or "application/octet-stream",
+            )
+        )
+
+    kwargs = {
+        "parent": {"database_id": NOTION_DATABASE_ID},
+        "properties": properties,
+    }
+    if children:
+        kwargs["children"] = children
+
+    notion.pages.create(**kwargs)
 
 
 def main():
     notion_database_reachable()
 
     diary_date = get_diary_date()
-    html = login_and_fetch_html(diary_date)
-    entries = extract_entries(html, diary_date)
+    entries = fetch_diary_entries(diary_date)
 
     print(f"Found {len(entries)} entries for {diary_date}")
 
     new_count = 0
     for entry in entries:
         if not already_exists(entry["unique_key"]):
-            create_notion_page(entry)
+            dl = entry.pop("_attachment_download", None)
+            upload_id = None
+            upload_ct = None
+            if dl:
+                try:
+                    upload_id = upload_attachment_bytes_to_notion(
+                        dl["bytes"], dl["filename"], dl["content_type"]
+                    )
+                    upload_ct = dl["content_type"]
+                except Exception as e:
+                    print(f"Notion attachment upload failed (MCB URL kept if present): {e}")
+            create_notion_page(
+                entry,
+                notion_file_upload_id=upload_id,
+                notion_upload_content_type=upload_ct,
+            )
             send_discord_message(entry=entry)
             new_count += 1
             print(f"Added: {entry['subject']} / {entry['type']}")
