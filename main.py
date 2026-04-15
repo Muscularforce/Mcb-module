@@ -1,7 +1,7 @@
 import mimetypes
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import unquote, urljoin
 
 import requests
@@ -25,6 +25,23 @@ NOTION_FILE_API_VERSION = "2026-03-11"
 NOTION_MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 load_dotenv()
+
+# Discord embed accents (type substring → color). Default blurple if no match.
+DISCORD_TYPE_COLORS = {
+    "homework": 0xE67E22,
+    "assignment": 0xE67E22,
+    "circular": 0x3498DB,
+    "notice": 0x9B59B6,
+    "announcement": 0x9B59B6,
+    "holiday": 0x1ABC9C,
+    "exam": 0xE74C3C,
+    "test": 0xE74C3C,
+    "event": 0xF1C40F,
+    "reminder": 0x1ABC9C,
+}
+DISCORD_DEFAULT_EMBED_COLOR = 0x5865F2
+DISCORD_SUCCESS_EMBED_COLOR = 0x57F287
+DISCORD_ERROR_EMBED_COLOR = 0xED4245
 
 
 def require_env(name: str) -> str:
@@ -300,37 +317,109 @@ def try_fill_first_matching(locators, value) -> bool:
     return False
 
 
+def _discord_iso_timestamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+
+
+def _discord_truncate(text: str, max_len: int) -> str:
+    text = (text or "").strip()
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 1] + "…"
+
+
+def _discord_color_for_entry_type(entry_type: str) -> int:
+    t = (entry_type or "").lower()
+    for key, color in DISCORD_TYPE_COLORS.items():
+        if key in t:
+            return color
+    return DISCORD_DEFAULT_EMBED_COLOR
+
+
+def _discord_webhook_identity() -> tuple[str, str | None]:
+    name = os.getenv("DISCORD_WEBHOOK_USERNAME", "MCB → Notion").strip() or "MCB → Notion"
+    avatar = os.getenv("DISCORD_WEBHOOK_AVATAR_URL", "").strip()
+    if not avatar:
+        avatar = "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
+    return name, avatar
+
+
 def send_discord_message(content: str = None, entry: dict = None):
     webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
     if not webhook:
         return
 
+    username, avatar_url = _discord_webhook_identity()
+
     try:
         if entry is not None:
-            payload = {
-                "embeds": [
-                    {
-                        "title": f"{entry['subject']} — {entry['type']}",
-                        "description": entry["summary"],
-                        "color": 3447003,
-                        "fields": [
-                            {"name": "Teacher", "value": entry["teacher"], "inline": True},
-                            {"name": "Date", "value": entry["date"], "inline": True},
-                        ],
-                    }
-                ]
+            subject = _discord_truncate(entry.get("subject") or "Unknown", 240)
+            entry_type = entry.get("type") or "—"
+            summary = _discord_truncate(entry.get("summary") or "—", 3800)
+            teacher = _discord_truncate(entry.get("teacher") or "—", 1024)
+            date_str = _discord_truncate(entry.get("date") or "—", 256)
+
+            embed = {
+                "author": {
+                    "name": "New diary entry · synced to Notion",
+                    "icon_url": avatar_url,
+                },
+                "title": f"📚 {subject}",
+                "description": f"**{_discord_truncate(entry_type, 120)}**\n\n{summary}",
+                "color": _discord_color_for_entry_type(entry_type),
+                "fields": [
+                    {"name": "👤 Teacher", "value": teacher, "inline": True},
+                    {"name": "📅 Date", "value": date_str, "inline": True},
+                ],
+                "footer": {"text": "Rainbow MyClassboard → Notion"},
+                "timestamp": _discord_iso_timestamp(),
             }
 
-            if entry.get("attachment_url"):
-                payload["embeds"][0]["fields"].append(
+            att = entry.get("attachment_url")
+            if att:
+                att = att.strip()
+                can_link = (
+                    att.startswith("http")
+                    and ")" not in att
+                    and len(att) <= 500
+                )
+                if can_link:
+                    pretty_url = _discord_truncate(att, 220)
+                    field_val = (
+                        f"***Tap to access your file quickly***\n"
+                        f"**[⬇️ Download]({att})**  |  **[🔗 Open URL]({att})**\n"
+                        f"*`{pretty_url}`*"
+                    )
+                else:
+                    field_val = f"***Attachment URL***\n*{_discord_truncate(att, 1024)}*"
+                embed["fields"].append(
                     {
-                        "name": "Attachment",
-                        "value": entry["attachment_url"],
+                        "name": "📎 Attachment",
+                        "value": field_val,
                         "inline": False,
                     }
                 )
+
+            payload = {
+                "username": username,
+                "avatar_url": avatar_url,
+                "embeds": [embed],
+            }
         else:
-            payload = {"content": content or ""}
+            body = _discord_truncate(content or "", 3900)
+            payload = {
+                "username": username,
+                "avatar_url": avatar_url,
+                "embeds": [
+                    {
+                        "title": "✅ Diary sync complete",
+                        "description": body or "—",
+                        "color": DISCORD_SUCCESS_EMBED_COLOR,
+                        "footer": {"text": "Rainbow MyClassboard → Notion"},
+                        "timestamp": _discord_iso_timestamp(),
+                    }
+                ],
+            }
 
         r = requests.post(webhook, json=payload, timeout=20)
         print(f"Discord response: {r.status_code}")
@@ -346,11 +435,25 @@ def send_discord_error(message: str):
         return
 
     try:
-        text = (message or "").strip()
-        if len(text) > 1800:
-            text = text[:1800] + "…"
-        content = f"⚠ MyClassboard automation failed:\n{text}"
-        requests.post(webhook, json={"content": content}, timeout=20)
+        raw_message = (message or "").strip()
+        if "Execution context was destroyed" in raw_message and "Page.evaluate" in raw_message:
+            raw_message = "Its GODDAMS Mcbs fault not mine"
+        text = _discord_truncate(raw_message, 3800)
+        username, avatar_url = _discord_webhook_identity()
+        payload = {
+            "username": username,
+            "avatar_url": avatar_url,
+            "embeds": [
+                {
+                    "title": "⚠️ Sync failed",
+                    "description": text or "Unknown error.",
+                    "color": DISCORD_ERROR_EMBED_COLOR,
+                    "footer": {"text": "MyClassboard automation · check logs"},
+                    "timestamp": _discord_iso_timestamp(),
+                }
+            ],
+        }
+        requests.post(webhook, json=payload, timeout=20)
     except Exception as e:
         print(f"Discord error alert failed: {e}")
 
@@ -776,9 +879,10 @@ def main():
         else:
             print(f"Skipped duplicate: {entry['subject']} / {entry['type']}")
 
-    summary = f"Diary checked for {diary_date}. Found {len(entries)} entries. Added {new_count} new entries."
-    print(summary)
-    send_discord_message(content=summary)
+    if new_count > 0:
+        print(f"Added {new_count} new entries for {diary_date}.")
+    else:
+        print(f"No new entries for {diary_date}.")
 
 
 if __name__ == "__main__":
