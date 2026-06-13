@@ -15,8 +15,9 @@ import re
 import sys
 import json
 import requests as http_requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import unquote, urljoin
+
 
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
@@ -294,10 +295,11 @@ def extract_generic_cards(html, diary_date, default_type):
 
 # ---------------- Main Scraper ----------------
 
-def scrape_mcb(diary_date):
+def scrape_mcb(diary_date, scrape_all=False):
     """Log in to MCB, scrape all tabs, return list of entries."""
+    mode_str = "ALL HISTORICAL DATA" if scrape_all else f"date: {diary_date}"
     print(f"\n{'='*60}")
-    print(f"  MCB IMPORTER - Scraping date: {diary_date}")
+    print(f"  MCB IMPORTER - Scraping {mode_str}")
     print(f"{'='*60}\n")
 
     with sync_playwright() as p:
@@ -406,31 +408,75 @@ def scrape_mcb(diary_date):
         all_entries = []
 
         # --- Fetch diary entries via AJAX ---
-        print("[3/5] Fetching diary entries...")
-        try:
-            html = page.evaluate(
-                """
-                async ({url, diaryDate}) => {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: new URLSearchParams({ DiaryDate: diaryDate }).toString()
-                    });
-                    return await res.text();
-                }
-                """,
-                {"url": DIARY_URL, "diaryDate": diary_date},
-            )
-            diary_entries = extract_diary_entries(html, diary_date)
-            for e in diary_entries:
-                e["_source"] = "DiaryEntry"
-            all_entries.extend(diary_entries)
-            print(f"   [OK] Found {len(diary_entries)} diary entries")
-        except Exception as e:
-            print(f"   [FAIL] Diary fetch failed: {e}")
+        if scrape_all:
+            # Generate the last 90 dates (approx the full history since March 15, 2026)
+            print("[3/5] Generating and fetching diary entries for the last 90 days...")
+            dates = [(datetime.now() - timedelta(days=x)).strftime("%d %b %Y") for x in range(90)]
+            
+            try:
+                results = page.evaluate(
+                    """
+                    async ({url, dates}) => {
+                        const resList = [];
+                        for (const date of dates) {
+                            try {
+                                const res = await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    body: new URLSearchParams({ DiaryDate: date }).toString()
+                                });
+                                const html = await res.text();
+                                resList.push({ date, html });
+                            } catch (e) {
+                                resList.push({ date, html: '', error: e.message });
+                            }
+                        }
+                        return resList;
+                    }
+                    """,
+                    {"url": DIARY_URL, "dates": dates},
+                )
+                
+                success_count = 0
+                for res in results:
+                    if res["html"] and "No diary entries are found!" not in res["html"]:
+                        day_entries = extract_diary_entries(res["html"], res["date"])
+                        for e in day_entries:
+                            e["_source"] = "DiaryEntry"
+                        all_entries.extend(day_entries)
+                        success_count += len(day_entries)
+                print(f"   [OK] Found {success_count} diary entries across the last 90 days")
+            except Exception as e:
+                print(f"   [FAIL] Diary historical fetch failed: {e}")
+        else:
+            print("[3/5] Fetching diary entries for a single date...")
+            try:
+                html = page.evaluate(
+                    """
+                    async ({url, diaryDate}) => {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: new URLSearchParams({ DiaryDate: diaryDate }).toString()
+                        });
+                        return await res.text();
+                    }
+                    """,
+                    {"url": DIARY_URL, "diaryDate": diary_date},
+                )
+                diary_entries = extract_diary_entries(html, diary_date)
+                for e in diary_entries:
+                    e["_source"] = "DiaryEntry"
+                all_entries.extend(diary_entries)
+                print(f"   [OK] Found {len(diary_entries)} diary entries")
+            except Exception as e:
+                print(f"   [FAIL] Diary fetch failed: {e}")
 
         # --- Fetch announcements ---
         print("[4/5] Fetching announcements...")
@@ -438,6 +484,20 @@ def scrape_mcb(diary_date):
             ann_tab = page.locator("a:has-text('Announcements'), li:has-text('Announcements'), button:has-text('Announcements')").first
             ann_tab.click(timeout=15000)
             page.wait_for_timeout(5000)
+
+            if scrape_all:
+                print("   Scrolling down to load ALL older announcements...")
+                for i in range(50):
+                    page.evaluate("""
+                        window.scrollTo(0, document.body.scrollHeight);
+                        document.querySelectorAll('div').forEach(el => {
+                            if (el.scrollHeight > el.clientHeight) {
+                                el.scrollTop = el.scrollHeight;
+                            }
+                        });
+                    """)
+                    page.wait_for_timeout(1200)
+
             ann_html = page.content()
             ann_entries = extract_generic_cards(ann_html, diary_date, "Announcement")
             for e in ann_entries:
@@ -453,6 +513,20 @@ def scrape_mcb(diary_date):
             ass_tab = page.locator("a:has-text('Assignments'), li:has-text('Assignments'), button:has-text('Assignments')").first
             ass_tab.click(timeout=15000)
             page.wait_for_timeout(5000)
+
+            if scrape_all:
+                print("   Scrolling down to load ALL older worksheets...")
+                for i in range(50):
+                    page.evaluate("""
+                        window.scrollTo(0, document.body.scrollHeight);
+                        document.querySelectorAll('div').forEach(el => {
+                            if (el.scrollHeight > el.clientHeight) {
+                                el.scrollTop = el.scrollHeight;
+                            }
+                        });
+                    """)
+                    page.wait_for_timeout(1200)
+
             ass_html = page.content()
             ws_entries = extract_generic_cards(ass_html, diary_date, "Worksheet")
             for e in ws_entries:
@@ -568,12 +642,43 @@ def push_to_api(entries):
 # ---------------- Entry Point ----------------
 
 if __name__ == "__main__":
-    diary_date = sys.argv[1] if len(sys.argv) > 1 else datetime.now().strftime("%d %b %Y")
+    scrape_all = "--all" in sys.argv
+    
+    # Filter out --all from sys.argv for date parsing
+    args = [a for a in sys.argv if a != "--all"]
+    
+    diary_date = args[1] if len(args) > 1 else datetime.now().strftime("%d %b %Y")
 
-    entries = scrape_mcb(diary_date)
+    entries = scrape_mcb(diary_date, scrape_all=scrape_all)
 
-    if not entries:
-        print("\nNo entries found. The MCB portal may have no data for this date.")
-        print("Try specifying a different date: python mcb_import.py \"10 Jun 2026\"")
+    if entries:
+        # Deduplicate entries in Python based on type + date + subject + summary
+        seen = set()
+        unique_entries = []
+        for e in entries:
+            key = (e.get("type"), e.get("date"), e.get("subject"), (e.get("summary") or "")[:100])
+            if key not in seen:
+                seen.add(key)
+                unique_entries.append(e)
+        
+        print(f"\nFound {len(entries)} raw entries. Deduplicated down to {len(unique_entries)} unique entries.")
+
+        # Wipe existing entries from Supabase to start a clean sync if doing a full sync
+        if scrape_all:
+            print("Wiping existing entries from Supabase to start a clean sync...")
+            supabase_url = os.getenv("SUPABASE_URL")
+            supabase_key = os.getenv("SUPABASE_KEY")
+            if supabase_url and supabase_key:
+                try:
+                    from supabase import create_client
+                    supabase = create_client(supabase_url, supabase_key)
+                    supabase.table("entries").delete().neq("id", 0).execute()
+                    print("   [OK] Supabase table cleared.")
+                except Exception as ex:
+                    print(f"   [FAIL] Could not clear Supabase database: {ex}")
+            else:
+                print("   [WARNING] Supabase credentials not set in environment. Skipping DB wipe.")
+
+        push_to_api(unique_entries)
     else:
-        push_to_api(entries)
+        print("\nNo entries found.")
