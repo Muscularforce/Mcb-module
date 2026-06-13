@@ -470,8 +470,61 @@ def scrape_mcb(diary_date):
 # ---------------- Push to API ----------------
 
 def push_to_api(entries):
-    """Post scraped entries to the FastAPI backend."""
-    print(f"\nPushing {len(entries)} entries to API at {API_URL}...")
+    """Post scraped entries to Supabase (if configured) or the local FastAPI backend."""
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+
+    if supabase_url and supabase_key:
+        print(f"\nPushing {len(entries)} entries directly to Supabase at {supabase_url}...")
+        try:
+            from supabase import create_client, Client
+            supabase: Client = create_client(supabase_url, supabase_key)
+            
+            success = 0
+            failed = 0
+
+            for entry in entries:
+                source = entry.pop("_source", "DiaryEntry")
+
+                try:
+                    parsed_date = datetime.strptime(entry["date"], "%d %b %Y")
+                    api_date = parsed_date.strftime("%Y-%m-%d")
+                except ValueError:
+                    api_date = entry["date"]
+
+                payload = {
+                    "entry_type": source,
+                    "subject": entry.get("subject", "Unknown"),
+                    "teacher": entry.get("teacher", ""),
+                    "date": api_date,
+                    "summary": entry.get("summary", ""),
+                    "attachment_url": entry.get("attachment_url"),
+                }
+
+                try:
+                    # Insert row
+                    res = supabase.table("entries").insert(payload).execute()
+                    if len(res.data) > 0:
+                        success += 1
+                        print(f"  [OK] [{source}] {payload['subject']}")
+                    else:
+                        failed += 1
+                        print(f"  [FAIL] [{source}] {payload['subject']} - Empty response")
+                except Exception as e:
+                    failed += 1
+                    print(f"  [FAIL] [{source}] {payload['subject']} - {e}")
+
+            print(f"\n{'='*60}")
+            print(f"  SUPABASE IMPORT COMPLETE: {success} added, {failed} failed")
+            print(f"{'='*60}\n")
+            return
+        except ImportError:
+            print("WARNING: 'supabase' library is not installed. Falling back to local FastAPI backend...")
+        except Exception as e:
+            print(f"WARNING: Supabase connection failed: {e}. Falling back to local FastAPI backend...")
+
+    # Fallback to local FastAPI backend
+    print(f"\nPushing {len(entries)} entries to local API at {API_URL}...")
 
     success = 0
     failed = 0
@@ -479,7 +532,6 @@ def push_to_api(entries):
     for entry in entries:
         source = entry.pop("_source", "DiaryEntry")
 
-        # Convert date from "DD Mon YYYY" to "YYYY-MM-DD" for the API
         try:
             parsed_date = datetime.strptime(entry["date"], "%d %b %Y")
             api_date = parsed_date.strftime("%Y-%m-%d")
@@ -508,8 +560,9 @@ def push_to_api(entries):
             print(f"  [FAIL] [{source}] {payload['subject']} - {e}")
 
     print(f"\n{'='*60}")
-    print(f"  IMPORT COMPLETE: {success} added, {failed} failed")
+    print(f"  LOCAL IMPORT COMPLETE: {success} added, {failed} failed")
     print(f"{'='*60}\n")
+
 
 
 # ---------------- Entry Point ----------------
