@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from urllib.parse import unquote, urljoin
 
 import requests
+import pyfiglet
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from notion_client import Client
@@ -34,6 +35,7 @@ DISCORD_TYPE_COLORS = {
     "notice": 0x9B59B6,
     "announcement": 0x9B59B6,
     "holiday": 0x1ABC9C,
+    "worksheet": 0x3498DB,
     "exam": 0xE74C3C,
     "test": 0xE74C3C,
     "event": 0xF1C40F,
@@ -458,6 +460,24 @@ def send_discord_error(message: str):
         print(f"Discord error alert failed: {e}")
 
 
+def send_discord_date_separator(date_str: str):
+    webhook = os.getenv("DISCORD_WEBHOOK", "").strip()
+    if not webhook:
+        return
+    try:
+        ascii_text = pyfiglet.figlet_format(date_str, font="slant")
+        content = f"```\n{ascii_text}\n```"
+        username, avatar_url = _discord_webhook_identity()
+        payload = {
+            "username": username,
+            "avatar_url": avatar_url,
+            "content": content,
+        }
+        requests.post(webhook, json=payload, timeout=20)
+    except Exception as e:
+        print(f"Discord date separator failed: {e}")
+
+
 def find_visible_match(scope, selectors):
     for selector in selectors:
         try:
@@ -681,6 +701,29 @@ def fetch_diary_entries(diary_date: str):
         )
 
         entries = extract_entries(html, diary_date)
+        
+        # --- NEW TAB SCRAPING LOGIC ---
+        try:
+            announcement_tab = page.locator("a:has-text('Announcements'), li:has-text('Announcements')").first
+            if announcement_tab.count() > 0:
+                announcement_tab.click(timeout=10000)
+                page.wait_for_timeout(5000)
+                ann_html = page.content()
+                entries.extend(extract_generic_cards(ann_html, diary_date, "Announcement"))
+        except Exception as e:
+            print(f"Could not fetch Announcements: {e}")
+
+        try:
+            assignment_tab = page.locator("a:has-text('Assignments'), li:has-text('Assignments')").first
+            if assignment_tab.count() > 0:
+                assignment_tab.click(timeout=10000)
+                page.wait_for_timeout(5000)
+                ass_html = page.content()
+                entries.extend(extract_generic_cards(ass_html, diary_date, "Worksheet"))
+        except Exception as e:
+            print(f"Could not fetch Assignments: {e}")
+        # ------------------------------
+
         req = context.request
         for entry in entries:
             if not entry.get("attachment_url"):
@@ -691,6 +734,50 @@ def fetch_diary_entries(diary_date: str):
 
         browser.close()
         return entries
+
+
+def extract_generic_cards(html: str, diary_date: str, default_type: str):
+    soup = BeautifulSoup(html, "html.parser")
+    new_entries = []
+    
+    for node in soup.find_all("div", class_=lambda c: c and "card-body" in c):
+        text = clean_text(node.get_text(" ", strip=True))
+        if not text or len(text) < 10:
+            continue
+            
+        summary = text[:200]
+        title = default_type
+        title_node = node.find(["h6", "strong", "b", "h5"])
+        if title_node:
+            title = clean_text(title_node.get_text(" ", strip=True)) or default_type
+            
+        attachment_name, attachment_url = None, None
+        attachment_link = node.find("a", onclick=re.compile(r"ViewFile\(", re.I))
+        if not attachment_link:
+            for a in node.find_all("a", href=True):
+                h = (a.get("href") or "").strip()
+                if h and not h.lower().startswith("javascript:"):
+                    if re.search(r"\.(pdf|doc|docx|xls|xlsx|ppt|pptx?|jpe?g|png|gif|zip)(\?|#|$)", h, re.I):
+                        attachment_link = a
+                        break
+        if attachment_link:
+            attachment_name, attachment_url = _parse_attachment_link(attachment_link)
+
+        unique_key = f"{diary_date}|{title}|{default_type}|0|0|{summary[:80]}"
+        
+        new_entries.append({
+            "subject": title,
+            "type": default_type,
+            "teacher": "System" if default_type == "Announcement" else "Teacher",
+            "summary": summary,
+            "attachment_name": attachment_name,
+            "attachment_url": attachment_url,
+            "diary_id": 0,
+            "subject_id": 0,
+            "unique_key": unique_key,
+            "date": diary_date,
+        })
+    return new_entries
 
 
 def extract_entries(html: str, diary_date: str):
@@ -822,9 +909,22 @@ def create_notion_page(
         "Unique Key": {"rich_text": [{"text": {"content": entry["unique_key"]}}]},
     }
 
-    # MCB attachment URLs usually require portal cookies; a plain URL in Notion often errors.
-    # When upload succeeds, attach the file as a page block and omit the URL property.
-    if entry.get("attachment_url") and not notion_file_upload_id:
+    # When file is uploaded, add it to the Attachment property (Files type).
+    # MCB attachment URLs usually require portal cookies; keep them only when no upload.
+    if notion_file_upload_id:
+        attachment_name = entry.get("attachment_name", "attachment")
+        properties["Attachment"] = {
+            "files": [
+                {
+                    "name": attachment_name,
+                    "file": {
+                        "type": "file_upload",
+                        "file_upload": {"id": notion_file_upload_id},
+                    },
+                }
+            ]
+        }
+    elif entry.get("attachment_url"):
         properties["Attachment"] = {"url": entry["attachment_url"]}
 
     children = []
@@ -850,6 +950,19 @@ def main():
     notion_database_reachable()
 
     diary_date = get_diary_date()
+
+    # Check and update local date state for Discord separator
+    state_file = ".last_sync_date"
+    last_date = ""
+    if os.path.exists(state_file):
+        with open(state_file, "r") as f:
+            last_date = f.read().strip()
+            
+    if last_date != diary_date:
+        send_discord_date_separator(diary_date)
+        with open(state_file, "w") as f:
+            f.write(diary_date)
+
     entries = fetch_diary_entries(diary_date)
 
     print(f"Found {len(entries)} entries for {diary_date}")
