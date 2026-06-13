@@ -1,3 +1,4 @@
+DELETE FROM public.entries;
 INSERT INTO public.entries (entry_type, subject, teacher, date, summary, attachment_url) VALUES ('DiaryEntry', 'Biology', 'PRONITA GUPTA', '2026-06-11', 'Discussion on Human Blood & Lymph - functions. Notes given.', NULL);
 INSERT INTO public.entries (entry_type, subject, teacher, date, summary, attachment_url) VALUES ('DiaryEntry', 'Biology', 'PRONITA GUPTA', '2026-06-11', 'Revise the topic. Prepare for PA I. A revision class will be held on Tuesday, 16th June.', NULL);
 INSERT INTO public.entries (entry_type, subject, teacher, date, summary, attachment_url) VALUES ('DiaryEntry', 'English', 'PAULAMI BANERJEE', '2026-06-11', 'Two Stories about Flying: Part 1 (His First Flight) reading and explanation began.', NULL);

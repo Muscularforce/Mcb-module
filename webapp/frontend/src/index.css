@@ -32,6 +32,10 @@
   --color-worksheet-bg: rgba(16, 185, 129, 0.1);
   --color-worksheet-border: rgba(16, 185, 129, 0.25);
 
+  --color-answerkey: #f43f5e;
+  --color-answerkey-bg: rgba(244, 63, 94, 0.08);
+  --color-answerkey-border: rgba(244, 63, 94, 0.25);
+
   --color-announcement: #f59e0b;
   --color-announcement-bg: rgba(245, 158, 11, 0.1);
   --color-announcement-border: rgba(245, 158, 11, 0.25);
@@ -351,6 +355,7 @@ body::after {
 
 .entry-card.diary::before { background: linear-gradient(90deg, var(--color-diary), #60a5fa); }
 .entry-card.worksheet::before { background: linear-gradient(90deg, var(--color-worksheet), #34d399); }
+.entry-card.worksheet.answer-key::before { background: linear-gradient(90deg, var(--color-answerkey), #fda4af); }
 .entry-card.announcement::before { background: linear-gradient(90deg, var(--color-announcement), #fbbf24); }
 
 .entry-card:hover {
@@ -384,6 +389,7 @@ body::after {
 
 .entry-type-icon.diary { background: var(--color-diary-bg); color: var(--color-diary); border: 1px solid var(--color-diary-border); }
 .entry-type-icon.worksheet { background: var(--color-worksheet-bg); color: var(--color-worksheet); border: 1px solid var(--color-worksheet-border); }
+.entry-type-icon.worksheet.answer-key { background: var(--color-answerkey-bg); color: var(--color-answerkey); border: 1px solid var(--color-answerkey-border); }
 .entry-type-icon.announcement { background: var(--color-announcement-bg); color: var(--color-announcement); border: 1px solid var(--color-announcement-border); }
 
 .entry-badge {
@@ -397,6 +403,7 @@ body::after {
 
 .entry-badge.diary { background: var(--color-diary-bg); color: var(--color-diary); }
 .entry-badge.worksheet { background: var(--color-worksheet-bg); color: var(--color-worksheet); }
+.entry-badge.worksheet.answer-key { background: var(--color-answerkey-bg); color: var(--color-answerkey); }
 .entry-badge.announcement { background: var(--color-announcement-bg); color: var(--color-announcement); }
 
 .entry-title {
@@ -517,6 +524,7 @@ body::after {
 
 .modal-accent-bar.diary { background: linear-gradient(90deg, var(--color-diary), #60a5fa, var(--accent-violet)); }
 .modal-accent-bar.worksheet { background: linear-gradient(90deg, var(--color-worksheet), #34d399, #6ee7b7); }
+.modal-accent-bar.worksheet.answer-key { background: linear-gradient(90deg, var(--color-answerkey), #fda4af, var(--accent-violet)); }
 .modal-accent-bar.announcement { background: linear-gradient(90deg, var(--color-announcement), #fbbf24, #fcd34d); }
 
 .modal-header {
@@ -538,6 +546,7 @@ body::after {
 
 .modal-icon.diary { background: var(--color-diary-bg); color: var(--color-diary); border: 1px solid var(--color-diary-border); }
 .modal-icon.worksheet { background: var(--color-worksheet-bg); color: var(--color-worksheet); border: 1px solid var(--color-worksheet-border); }
+.modal-icon.worksheet.answer-key { background: var(--color-answerkey-bg); color: var(--color-answerkey); border: 1px solid var(--color-answerkey-border); }
 .modal-icon.announcement { background: var(--color-announcement-bg); color: var(--color-announcement); border: 1px solid var(--color-announcement-border); }
 
 .modal-header-text {

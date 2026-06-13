@@ -53,100 +53,66 @@ else:
 
 
 # ============================================================
-#  STEP 2: FIX WORKSHEET TITLES (single-letter subjects)
-#  Extract real subject from summary text
+#  STEP 2: FIX WORKSHEET TITLES
+#  Extract specific worksheet title from summary text
 # ============================================================
-print("--- STEP 2: Fixing worksheet subjects ---")
+def extract_worksheet_title(summary: str) -> str:
+    summary = summary.strip()
+    # Remove leading uppercase letter followed by space
+    title = re.sub(r"^[A-Z]\s+", "", summary)
+    
+    # Split at weekday name followed by space and comma, or just comma (e.g. Sat ,)
+    match = re.search(r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s*,", title, re.IGNORECASE)
+    if match:
+        title = title[:match.start()].strip()
+    else:
+        # Fallback split at date (like 06 Jun 2026)
+        match_date = re.search(r"\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\b", title, re.IGNORECASE)
+        if match_date:
+            title = title[:match_date.start()].strip()
+            
+    # Remove any trailing "Expired" keyword if it gets caught
+    title = re.sub(r"\bExpired\b\s*$", "", title, flags=re.IGNORECASE).strip()
+    
+    # List of subjects to strip from the end of the worksheet title
+    subjects = [
+        "Mathematics", "Maths", "Math", "Science", "English", "Social Studies", "Social Study", "Social",
+        "Information Technology", "IT", "Hindi", "Sanskrit", "Kannada", "Computer Science", "Computer",
+        "General Knowledge", "GK", "Art", "Music", "Physical Education", "PE", "Physics", "Chemistry", "Biology"
+    ]
+    
+    # Build a regex matching any of these subjects at the end of the string
+    subject_pattern = r"[\s\-\,]+(?:" + "|".join(re.escape(s) for s in subjects) + r")\s*$"
+    
+    # Double pass to clean trailing subject repetitions
+    title = re.sub(subject_pattern, "", title, flags=re.IGNORECASE).strip()
+    title = re.sub(subject_pattern, "", title, flags=re.IGNORECASE).strip()
+    
+    # Remove trailing hyphens or commas
+    title = re.sub(r"[\-\,\s]+$", "", title).strip()
+    
+    # Normalize spaces
+    title = re.sub(r"\s+", " ", title)
+    return title
+
+print("--- STEP 2: Fixing worksheet titles ---")
 worksheets = db.query(Entry).filter(Entry.entry_type == "Worksheet").all()
 fixed_ws = 0
 
 for ws in worksheets:
-    subj = (ws.subject or "").strip()
     summ = (ws.summary or "").strip()
-
-    needs_fix = len(subj) <= 2 or subj in ["Teacher", "System"]
-
-    if not needs_fix:
+    if not summ:
         continue
 
-    # The summary typically looks like:
-    # "M Math Revision Sheet Answerkey Maths Sat ,06 Jun 2026 Submission due date..."
-    # "S Science-06 Jun 2026 Home Assignment Science Sat ,06 Jun 2026..."
-    # "E English-06 Jun 2026 Home Assignment English Sat ,06 Jun 2026..."
-    # "G GRADE X IT PA-I RS Answer Key IT Tue ,02 Jun 2026..."
-    # "R Revision worksheet -01 Answer Key Hindi Tue ,02 Jun 2026..."
-    # "I IT PA-I RS Answer Key IT ..."
-    # "H Hindi ..."
-    # "W Work Sheet ..."
-
-    new_subject = None
-
-    # Strategy 1: Look for known subject names anywhere in the summary
-    subject_keywords = [
-        (r"\bMath(?:ematics|s)?\b", "Mathematics"),
-        (r"\bPhysics\b", "Physics"),
-        (r"\bChemistry\b", "Chemistry"),
-        (r"\bBiology\b", "Biology"),
-        (r"\bEnglish\b", "English"),
-        (r"\bHindi\b", "Hindi"),
-        (r"\bSanskrit\b", "Sanskrit"),
-        (r"\bKannada\b", "Kannada"),
-        (r"\bSocial\s*Stud(?:ies|y)\b", "Social Studies"),
-        (r"\bScience\b", "Science"),
-        (r"\b(?:IT|Information\s*Technology)\b", "IT"),
-        (r"\bComputer\b", "Computer Science"),
-        (r"\bGeneral\s*Knowledge\b", "General Knowledge"),
-        (r"\bGK\b", "General Knowledge"),
-        (r"\bArt\b", "Art"),
-        (r"\bMusic\b", "Music"),
-        (r"\bPE\b|Physical\s*Education", "Physical Education"),
-        (r"\bEconomics\b", "Economics"),
-        (r"\bGeography\b", "Geography"),
-        (r"\bHistory\b", "History"),
-        (r"\bCivics\b", "Civics"),
-        (r"\bPolitical\s*Science\b", "Political Science"),
-    ]
-
-    for pattern, name in subject_keywords:
-        # Skip if the match is just the single-letter prefix
-        match = re.search(pattern, summ, re.I)
-        if match and match.start() > 0:  # found after the first char
-            new_subject = name
-            break
-        elif match and match.start() == 0:
-            new_subject = name
-            break
-
-    # Strategy 2: If summary starts with "X SubjectName-Date..." pattern
-    if not new_subject:
-        m = re.match(r"^[A-Z]\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)", summ)
-        if m:
-            candidate = m.group(1).strip()
-            if len(candidate) >= 3:
-                new_subject = candidate
-
-    # Strategy 3: Look for "Home Assignment SUBJECT" pattern
-    if not new_subject:
-        m = re.search(r"Home\s+Assignment\s+([A-Za-z\s]+?)(?:\s+\w{3}\s*,)", summ, re.I)
-        if m:
-            new_subject = m.group(1).strip()
-
-    # Strategy 4: Look for "Answer Key SUBJECT" pattern
-    if not new_subject:
-        m = re.search(r"Answer\s+Key\s+([A-Za-z\s]+?)(?:\s+\w{3}\s*,)", summ, re.I)
-        if m:
-            new_subject = m.group(1).strip()
-
-    if new_subject:
+    new_title = extract_worksheet_title(summ)
+    if new_title and new_title != ws.subject:
         old = ws.subject
-        ws.subject = new_subject
+        ws.subject = new_title
         fixed_ws += 1
-        print(f"  FIXED [id={ws.id}] '{old}' -> '{new_subject}'")
-    else:
-        print(f"  SKIP  [id={ws.id}] '{subj}' -- could not determine subject from: {summ[:60]}")
+        print(f"  FIXED [id={ws.id}] '{old}' -> '{new_title}'")
 
 db.commit()
-print(f"  Fixed {fixed_ws} worksheet subjects\n")
+print(f"  Fixed {fixed_ws} worksheet titles\n")
 
 
 # ============================================================

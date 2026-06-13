@@ -8,6 +8,14 @@ interface Props {
 }
 
 export const EntryCard: React.FC<Props> = ({ entry, onClick }) => {
+  const isAnswerKey = entry.type === 'worksheet' && 
+    (entry.title.toLowerCase().includes('answerkey') || 
+     entry.title.toLowerCase().includes('answer key') || 
+     entry.title.toLowerCase().includes(' ak') || 
+     entry.title.endsWith(' AK') ||
+     entry.title.toLowerCase().includes('ans key') || 
+     entry.title.toLowerCase().includes('anskey'));
+
   const getIcon = (type: string) => {
     switch (type) {
       case 'diary': return <Book size={20} />;
@@ -18,6 +26,7 @@ export const EntryCard: React.FC<Props> = ({ entry, onClick }) => {
   };
 
   const getLabel = (type: string) => {
+    if (isAnswerKey) return 'Answer Key';
     switch (type) {
       case 'diary': return 'Diary';
       case 'worksheet': return 'Worksheet';
@@ -27,12 +36,12 @@ export const EntryCard: React.FC<Props> = ({ entry, onClick }) => {
   };
 
   return (
-    <div className={`entry-card ${entry.type}`} onClick={() => onClick(entry)}>
+    <div className={`entry-card ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`} onClick={() => onClick(entry)}>
       <div className="entry-card-top">
-        <div className={`entry-type-icon ${entry.type}`}>
+        <div className={`entry-type-icon ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
           {getIcon(entry.type)}
         </div>
-        <span className={`entry-badge ${entry.type}`}>
+        <span className={`entry-badge ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
           {getLabel(entry.type)}
         </span>
       </div>

@@ -233,6 +233,46 @@ def extract_diary_entries(html, diary_date):
     return entries
 
 
+def extract_worksheet_title(summary: str) -> str:
+    summary = summary.strip()
+    # Remove leading uppercase letter followed by space
+    title = re.sub(r"^[A-Z]\s+", "", summary)
+    
+    # Split at weekday name followed by space and comma, or just comma (e.g. Sat ,)
+    match = re.search(r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s*,", title, re.IGNORECASE)
+    if match:
+        title = title[:match.start()].strip()
+    else:
+        # Fallback split at date (like 06 Jun 2026)
+        match_date = re.search(r"\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\b", title, re.IGNORECASE)
+        if match_date:
+            title = title[:match_date.start()].strip()
+            
+    # Remove any trailing "Expired" keyword if it gets caught
+    title = re.sub(r"\bExpired\b\s*$", "", title, flags=re.IGNORECASE).strip()
+    
+    # List of subjects to strip from the end of the worksheet title
+    subjects = [
+        "Mathematics", "Maths", "Math", "Science", "English", "Social Studies", "Social Study", "Social",
+        "Information Technology", "IT", "Hindi", "Sanskrit", "Kannada", "Computer Science", "Computer",
+        "General Knowledge", "GK", "Art", "Music", "Physical Education", "PE", "Physics", "Chemistry", "Biology"
+    ]
+    
+    # Build a regex matching any of these subjects at the end of the string
+    subject_pattern = r"[\s\-\,]+(?:" + "|".join(re.escape(s) for s in subjects) + r")\s*$"
+    
+    # Double pass to clean trailing subject repetitions
+    title = re.sub(subject_pattern, "", title, flags=re.IGNORECASE).strip()
+    title = re.sub(subject_pattern, "", title, flags=re.IGNORECASE).strip()
+    
+    # Remove trailing hyphens or commas
+    title = re.sub(r"[\-\,\s]+$", "", title).strip()
+    
+    # Normalize spaces
+    title = re.sub(r"\s+", " ", title)
+    return title
+
+
 def extract_generic_cards(html, diary_date, default_type):
     """Extract cards from Announcements or Assignments tabs."""
     soup = BeautifulSoup(html, "html.parser")
@@ -245,9 +285,12 @@ def extract_generic_cards(html, diary_date, default_type):
 
         summary = text[:500]
         title = default_type
-        title_node = node.find(["h6", "strong", "b", "h5"])
-        if title_node:
-            title = clean_text(title_node.get_text(" ", strip=True)) or default_type
+        if default_type == "Worksheet":
+            title = extract_worksheet_title(text)
+        else:
+            title_node = node.find(["h6", "strong", "b", "h5"])
+            if title_node:
+                title = clean_text(title_node.get_text(" ", strip=True)) or default_type
 
         # Try to get teacher name
         teacher_span = node.find("span", style=lambda s: s and "darkgray" in s)

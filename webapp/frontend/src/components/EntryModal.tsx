@@ -32,7 +32,16 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
     }
   };
 
+  const isAnswerKey = entry && entry.type === 'worksheet' && 
+    (entry.title.toLowerCase().includes('answerkey') || 
+     entry.title.toLowerCase().includes('answer key') || 
+     entry.title.toLowerCase().includes(' ak') || 
+     entry.title.endsWith(' AK') ||
+     entry.title.toLowerCase().includes('ans key') || 
+     entry.title.toLowerCase().includes('anskey'));
+
   const getLabel = (type: string) => {
+    if (isAnswerKey) return 'Answer Key';
     switch (type) {
       case 'diary': return 'Diary Entry';
       case 'worksheet': return 'Worksheet';
@@ -48,18 +57,18 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
     >
       {entry && (
         <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-          <div className={`modal-accent-bar ${entry.type}`} />
+          <div className={`modal-accent-bar ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`} />
 
           <button className="modal-close" onClick={onClose} aria-label="Close">
             <X size={18} />
           </button>
 
           <div className="modal-header">
-            <div className={`modal-icon ${entry.type}`}>
+            <div className={`modal-icon ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
               {getIcon(entry.type)}
             </div>
             <div className="modal-header-text">
-              <div className={`entry-badge ${entry.type}`} style={{ marginBottom: 10 }}>
+              <div className={`entry-badge ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`} style={{ marginBottom: 10 }}>
                 {getLabel(entry.type)}
               </div>
               <h2 className="modal-title">{entry.title}</h2>
