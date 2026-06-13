@@ -1,4 +1,5 @@
 import { Entry } from './types';
+import { supabase } from './lib/supabase';
 
 const mockData: Entry[] = [
   {
@@ -64,11 +65,21 @@ const mockData: Entry[] = [
 
 export const fetchEntries = async (): Promise<Entry[]> => {
   try {
-    const response = await fetch('http://localhost:8000/api/entries');
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+    // Attempt to fetch from Supabase
+    const { data, error } = await supabase
+      .from('entries')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (error) {
+      throw error;
     }
-    const data = await response.json();
+
+    if (!data || data.length === 0) {
+      // If table is empty or missing, fallback to mock data
+      return mockData;
+    }
+
     return data.map((item: any) => {
       let mappedType: 'diary' | 'worksheet' | 'announcement' = 'diary';
       if (item.entry_type === 'Worksheet') mappedType = 'worksheet';
@@ -82,11 +93,11 @@ export const fetchEntries = async (): Promise<Entry[]> => {
         content: item.summary || '',
         date: item.date || '',
         teacher: item.teacher || '',
-        attachment_url: item.attachment_url
+        attachment_url: item.attachment_url || undefined
       };
     });
   } catch (error) {
-    console.warn('Failed to fetch from backend. Using mock data.', error);
+    console.warn('Failed to fetch from Supabase. Falling back to local mock data.', error);
     return new Promise((resolve) => setTimeout(() => resolve(mockData), 500));
   }
 };
