@@ -1,5 +1,11 @@
 {
-  "buildCommand": "cd webapp/frontend && npm install && npm run build",
-  "outputDirectory": "webapp/frontend/dist",
-  "cleanUrls": true
+  "builds": [
+    {
+      "src": "webapp/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ]
 }
