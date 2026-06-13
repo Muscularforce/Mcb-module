@@ -1,0 +1,8 @@
+# Ignore python scripts in Vercel to prevent automatic Python builder triggering
+main.py
+mcb_import.py
+mcb_scraper.py
+webapp/backend/
+requirements.txt
+webapp/generate_supabase_sql.py
+webapp/supabase_seed.sql
