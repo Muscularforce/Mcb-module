@@ -280,6 +280,348 @@ def extract_worksheet_title(summary: str) -> str:
     return title
 
 
+def detect_subject(title: str, summary: str, teacher: str) -> str:
+    combined = (title + " " + summary + " " + (teacher or "")).lower()
+    
+    # Check Hindi first
+    if "hindi" in combined or "savita vyas" in combined or "साखी" in combined or "पाठ" in combined or "पद्य" in combined:
+        return "Hindi"
+    if "sanskrit" in combined or "संस्कृत" in combined:
+        return "Sanskrit"
+    if "kannada" in combined:
+        return "Kannada"
+    if "french" in combined:
+        return "French"
+    if "social science" in combined or "social studies" in combined or "social study" in combined or "riddhi shah" in combined or "sst" in combined or "history" in combined or "geography" in combined or "civics" in combined or "economics" in combined:
+        return "Social Studies"
+    if "math" in combined or "mathematics" in combined or "maths" in combined:
+        return "Maths"
+    if "science" in combined or "physics" in combined or "chemistry" in combined or "biology" in combined or "sneha nair" in combined or "sneha" in combined:
+        return "Science"
+    if "it" in combined or "information technology" in combined or "computer" in combined or "programming" in combined:
+        return "IT"
+    if "english" in combined or "english teacher" in combined:
+        return "English"
+        
+    subjects_map = {
+        "math": "Maths", "maths": "Maths", "mathematics": "Maths",
+        "science": "Science", "physics": "Science", "chemistry": "Science", "biology": "Science",
+        "english": "English",
+        "social": "Social Studies", "sst": "Social Studies",
+        "hindi": "Hindi",
+        "it": "IT", "computer": "IT",
+        "sanskrit": "Sanskrit", "kannada": "Kannada", "french": "French"
+    }
+    for k, v in subjects_map.items():
+        if k in title.lower():
+            return v
+            
+    title_clean = title.strip()
+    if title_clean:
+        return title_clean
+    return "General"
+
+
+def detect_properties(title: str, summary: str, attachment_url: str) -> tuple[bool, bool]:
+    combined = (title + " " + summary + " " + (attachment_url or "")).lower()
+    
+    # Answer key detection using regex word boundaries
+    is_answer_key = False
+    ak_patterns = [
+        r'\banswer\s*key\b',
+        r'\banswerkey\b',
+        r'\bans\s*key\b',
+        r'\banskey\b',
+        r'\bak\b',
+        r'\bak\.',
+        r'\bak_'
+    ]
+    if any(re.search(p, combined) for p in ak_patterns):
+        is_answer_key = True
+        
+    # Revision sheet detection using regex word boundaries
+    is_revision = False
+    rev_patterns = [
+        r'\brevision\b',
+        r'\bpa\s*[-–_]?\s*[i1]\b', # PA-I, PA-1, PA_I, PA I, PA1
+        r'\brs\b',
+        r'\brevision\s*sheet\b',
+        r'\brevision\s*worksheet\b'
+    ]
+    if any(re.search(p, combined) for p in rev_patterns):
+        is_revision = True
+        
+    return is_revision, is_answer_key
+
+
+def extract_number(title: str, summary: str) -> int | None:
+    title_clean = title.lower()
+    summary_clean = summary.lower()
+    
+    # Try to replace letter 'O' with '0' in common mistakes like 'O1' or '-O1'
+    title_clean = re.sub(r'\b[oO](\d+)\b', r'0\1', title_clean)
+    
+    roman_map = {'i': 1, 'ii': 2, 'iii': 3, 'iv': 4, 'v': 5, 'vi': 6, 'vii': 7, 'viii': 8, 'ix': 9, 'x': 10}
+    prefixes = r'worksheet|ws|sheet|wk|revision|rs|pa'
+    
+    # Patterns for TITLE (can have standalone digits, but NO standalone Roman numerals)
+    title_patterns = [
+        rf'(?:{prefixes})\s*(?:-|–|_|\b)?\s*0*([1-9]\d*)\b',
+        r'\b0*([1-9]\d*)\b'
+    ]
+    
+    for pattern in title_patterns:
+        matches = re.findall(pattern, title_clean)
+        if matches:
+            return int(matches[0])
+            
+    # Check Roman numerals in TITLE (MUST have prefix to avoid Grade X)
+    roman_patterns = [
+        rf'(?:{prefixes})\s*(?:-|–|_|\b)?\s*\b([ivx]+)\b',
+    ]
+    for pattern in roman_patterns:
+        matches = re.findall(pattern, title_clean)
+        if matches:
+            val = matches[0]
+            if val in roman_map:
+                return roman_map[val]
+
+    # Patterns for SUMMARY (must have explicit prefix)
+    summary_patterns = [
+        rf'(?:{prefixes})\s*(?:-|–|_|\b)?\s*0*([1-9]\d*)\b',
+    ]
+    for pattern in summary_patterns:
+        matches = re.findall(pattern, summary_clean)
+        if matches:
+            return int(matches[0])
+            
+    # Check Roman numerals in SUMMARY (with prefix)
+    roman_summary_patterns = [
+        rf'(?:{prefixes})\s*(?:-|–|_|\b)?\s*\b([ivx]+)\b',
+    ]
+    for pattern in roman_summary_patterns:
+        matches = re.findall(pattern, summary_clean)
+        if matches:
+            val = matches[0]
+            if val in roman_map:
+                return roman_map[val]
+                
+    return None
+
+
+def to_date_obj(date_str):
+    if not date_str:
+        return datetime.today().date()
+    if isinstance(date_str, datetime):
+        return date_str.date()
+    # Try parsing YYYY-MM-DD
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        pass
+    # Try parsing DD Mmm YYYY
+    try:
+        return datetime.strptime(date_str, "%d %b %Y").date()
+    except ValueError:
+        pass
+    return datetime.today().date()
+
+
+def fetch_existing_worksheets():
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_KEY")
+    
+    if supabase_url and supabase_key:
+        try:
+            from supabase import create_client
+            supabase = create_client(supabase_url, supabase_key)
+            res = supabase.table("entries").select("id, subject, summary, date, teacher, attachment_url").eq("entry_type", "Worksheet").execute()
+            if res.data:
+                return [
+                    {
+                        "id": r.get("id"),
+                        "subject": r.get("subject"),
+                        "summary": r.get("summary"),
+                        "date": r.get("date"),
+                        "teacher": r.get("teacher"),
+                        "attachment_url": r.get("attachment_url"),
+                        "type": "Worksheet",
+                        "_source": "Worksheet"
+                    }
+                    for r in res.data
+                ]
+        except Exception as e:
+            print(f"   [WARNING] Could not fetch existing worksheets from Supabase: {e}")
+            
+    # Fallback to local API
+    try:
+        r = http_requests.get(f"{API_URL}?entry_type=Worksheet&limit=1000", timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            return [
+                {
+                    "id": item.get("id"),
+                    "subject": item.get("subject"),
+                    "summary": item.get("summary"),
+                    "date": item.get("date"),
+                    "teacher": item.get("teacher"),
+                    "attachment_url": item.get("attachment_url"),
+                    "type": "Worksheet",
+                    "_source": "Worksheet"
+                }
+                for item in data
+            ]
+    except Exception as e:
+        print(f"   [WARNING] Could not fetch existing worksheets from local API: {e}")
+        
+    return []
+
+
+def apply_smart_worksheet_titles(entries, scrape_all=False):
+    # Fetch existing worksheets if not scraping all
+    existing_worksheets = []
+    if not scrape_all:
+        print("Fetching existing worksheets from database to maintain numbering sequence...")
+        existing_worksheets = fetch_existing_worksheets()
+        print(f"   Fetched {len(existing_worksheets)} existing worksheets.")
+        
+    all_ws = []
+    seen_keys = set()
+    
+    # Process existing worksheets
+    for item in existing_worksheets:
+        key = (item.get("date"), item.get("subject"), (item.get("summary") or "")[:100])
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        
+        all_ws.append({
+            "id": item.get("id"),
+            "subject_orig": item.get("subject"),
+            "summary": item.get("summary", ""),
+            "date": item.get("date"),
+            "teacher": item.get("teacher", ""),
+            "attachment_url": item.get("attachment_url"),
+            "date_obj": to_date_obj(item.get("date")),
+            "_is_existing": True
+        })
+        
+    # Process new worksheets from current scrape run
+    new_ws_indices = []
+    for i, e in enumerate(entries):
+        if e.get("type") == "Worksheet":
+            key = (e.get("date"), e.get("subject"), (e.get("summary") or "")[:100])
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            
+            e_copy = dict(e)
+            e_copy["date_obj"] = to_date_obj(e_copy.get("date"))
+            e_copy["subject_orig"] = e_copy.get("subject")
+            e_copy["_is_existing"] = False
+            e_copy["_index_in_entries"] = i
+            all_ws.append(e_copy)
+            new_ws_indices.append(len(all_ws) - 1)
+            
+    if not all_ws:
+        return entries
+        
+    # For each entry in all_ws, detect subject, revision, answer key, and explicit number
+    for item in all_ws:
+        item["det_subject"] = detect_subject(item["subject_orig"], item["summary"], item["teacher"])
+        item["is_revision"], item["is_answer_key"] = detect_properties(item["subject_orig"], item["summary"], item["attachment_url"])
+        item["explicit_number"] = extract_number(item["subject_orig"], item["summary"])
+        
+    # Group by (det_subject, is_revision)
+    groups = {}
+    for item in all_ws:
+        gkey = (item["det_subject"], item["is_revision"])
+        if gkey not in groups:
+            groups[gkey] = []
+        groups[gkey].append(item)
+        
+    # For each group, sort and number
+    for gkey, items in groups.items():
+        det_subject, is_revision = gkey
+        
+        # Separate worksheets vs answer keys
+        worksheets = [x for x in items if not x["is_answer_key"]]
+        answer_keys = [x for x in items if x["is_answer_key"]]
+        
+        # Sort worksheets chronologically by date
+        worksheets.sort(key=lambda x: x["date_obj"])
+        
+        # 1. Number the worksheets
+        used_numbers = set()
+        # First pass: collect explicitly specified numbers
+        for ws in worksheets:
+            if ws["explicit_number"] is not None:
+                used_numbers.add(ws["explicit_number"])
+                ws["assigned_number"] = ws["explicit_number"]
+            else:
+                ws["assigned_number"] = None
+                
+        # Second pass: fill in missing numbers sequentially
+        current_num = 1
+        for ws in worksheets:
+            if ws["assigned_number"] is None:
+                while current_num in used_numbers:
+                    current_num += 1
+                ws["assigned_number"] = current_num
+                used_numbers.add(current_num)
+                
+        # 2. Number the answer keys
+        # Sort answer keys chronologically by date
+        answer_keys.sort(key=lambda x: x["date_obj"])
+        
+        for ak in answer_keys:
+            # If it has an explicit number, use it
+            if ak["explicit_number"] is not None:
+                ak["assigned_number"] = ak["explicit_number"]
+            else:
+                # Find the closest preceding worksheet in the same group (same subject + revision status)
+                preceding_ws = [ws for ws in worksheets if ws["date_obj"] <= ak["date_obj"]]
+                if preceding_ws:
+                    # Pick the one with the latest date (closest preceding)
+                    closest = max(preceding_ws, key=lambda x: x["date_obj"])
+                    ak["assigned_number"] = closest["assigned_number"]
+                else:
+                    # If no preceding worksheet exists, look for any worksheets in the group
+                    if worksheets:
+                        # Pick the closest one chronologically
+                        closest = min(worksheets, key=lambda x: abs((x["date_obj"] - ak["date_obj"]).days))
+                        ak["assigned_number"] = closest["assigned_number"]
+                    else:
+                        # Fallback to sequential number for answer keys
+                        ak["assigned_number"] = 1
+                        
+    # Now build the final titles and set them
+    for item in all_ws:
+        subj = item["det_subject"]
+        num = item.get("assigned_number", 1)
+        is_rev = item["is_revision"]
+        is_ak = item["is_answer_key"]
+        
+        # Title construction
+        if is_rev:
+            if is_ak:
+                title = f"{subj} Revision WK {num} Answer Key"
+            else:
+                title = f"{subj} Revision WK {num}"
+        else:
+            if is_ak:
+                title = f"{subj} Worksheet {num} Answer Key"
+            else:
+                title = f"{subj} Worksheet {num}"
+                
+        # If it's a new entry (from the current scrape run), update its subject in entries list
+        if not item["_is_existing"] and "_index_in_entries" in item:
+            idx = item["_index_in_entries"]
+            entries[idx]["subject"] = title
+            
+    return entries
+
+
 def extract_generic_cards(html, diary_date, default_type):
     """Extract cards from Announcements or Assignments tabs."""
     soup = BeautifulSoup(html, "html.parser")
@@ -883,6 +1225,9 @@ if __name__ == "__main__":
                 unique_entries.append(e)
         
         print(f"\nFound {len(entries)} raw entries. Deduplicated down to {len(unique_entries)} unique entries.")
+
+        # Apply smart worksheet titling system
+        unique_entries = apply_smart_worksheet_titles(unique_entries, scrape_all)
 
         # Wipe existing entries from Supabase to start a clean sync if doing a full sync
         if scrape_all:
