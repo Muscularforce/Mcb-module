@@ -1,0 +1,2685 @@
+<!DOCTYPE html><html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>ERP</title>
+    <link rel="icon" href="https://cdn-mcb.myclassboard.com/gcscdnimages/home-images/favicon.png">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/Live_Classes/Assets/bootstrap-4.0.0/css/bootstrap.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Main Style CSS -->
+    <link rel="stylesheet" href="https://scriptsnew.myclassboard.in/cdndatastatic/assets/css/parent_login_style.css">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/css/plugins/jQueryUI/jquery-ui-1.10.4.custom.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://scriptsnew.myclassboard.in/cdndatastatic/Newtheme_Assets/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style type="text/css">@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.2.7/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.2.7/latin-ext/400/normal.woff2);unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.2.7/devanagari/400/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+20F0,U+25CC,U+A830-A839,U+A8E0-A8FF,U+11B00-11B09;font-display:swap;}</style>
+
+    <link href="https://cdn.datatables.net/1.10.23/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/css/plugins/footable/footable.core.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/css/plugins/clockpicker/clockpicker.css" rel="stylesheet">
+
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/css/plugins/datapicker/datepicker3.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-bs4.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/css/plugins/sweetalert/sweetalert.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/lightbox/css/lightbox.min.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/css/plugins/select2/select2.min.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/css/plugins/morris/morris-0.4.3.min.css" rel="stylesheet">
+    <link href="https://scriptsnew.myclassboard.in/cdndatastatic/js/virtual-select.min.css" rel="stylesheet">
+
+    <style type="text/css">
+        html, body {
+            height: 100%;
+        }
+
+        .master_diary_logo {
+            display: block;
+            margin: 0 auto;
+        }
+
+            .master_diary_logo img {
+                padding: 10px;
+                border-radius: 15px;
+            }
+
+        .master_side_menu ul li {
+            background-color: transparent !important;
+            border: none;
+        }
+
+        .bg-aliceblue-dark {
+            background: #bcdcf9 !important;
+        }
+
+        .form-control {
+            height: calc(1.8rem + 5px) !important;
+            font-size: .8rem !important;
+        }
+
+        textarea.form-control {
+            height: auto !important;
+        }
+
+        .parallax-mirror-visibility {
+            visibility: hidden !important;
+        }
+
+        .pac-container {
+            z-index: 1000000 !important;
+        }
+
+        #loading .sk-spinner-wave div {
+            background-color: #053c6d;
+        }
+
+        #loading {
+            display: none;
+            position: fixed;
+            z-index: 100000;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba( 255, 255, 255, .5 ); /*url('../Assets/img/spinner.gif') 50% 50% no-repeat;*/
+            background-size: 200px;
+        }
+
+        .sk-spinner-wave.sk-spinner {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+        }
+
+        .hr {
+            margin-top: 2px;
+            margin-bottom: 2px;
+            border: 0;
+            border-top: 1px solid rgba(0,0,0,.1);
+        }
+
+        .left_side_part {
+            height: auto !important;
+            display: block !important;
+            min-height: 1px !important;
+            /*border: solid 0 #ED5454 !important;
+                    border-left-width: 3px !important;*/
+            color: #ED5454 !important;
+        }
+
+        .activeanchor {
+            color: #ED5454 !important;
+            font-weight: bold !important;
+            background-image: url(https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/rectangle-icon.png);
+            background-position: left;
+            background-repeat: no-repeat;
+            padding-left: 22px;
+        }
+
+        .titleheader {
+            font-size: 24px;
+            color: #171725;
+            letter-spacing: 0.1px;
+            font-weight: 600;
+        }
+
+        .dropdown-AcademicYear {
+            color: #2d52e8 !important;
+            height: 44px !important;
+            font-size: 16px !important;
+        }
+
+        .dlSearchtxt {
+            border-right: 2px solid #d9dadc !important;
+            margin: 14px;
+            width: 5px;
+            background: #fff;
+        }
+
+        .dropdowntxt {
+            height: 60px !important;
+            border-top-left-radius: 5px;
+            border-bottom-left-radius: 5px;
+            font-size: 20px !important;
+        }
+
+        .btnsearch {
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .inputSearch {
+            height: 60px !important;
+            font-size: 20px !important;
+            font-style: italic;
+            width: 510px !important;
+        }
+
+        .h-60 {
+            height: 60px;
+        }
+
+
+        .popover {
+            max-width: 90%;
+            background: #f2f7ff;
+        }
+
+            .popover .icons-stud11 {
+                background: #2e52e7;
+                padding: 6px;
+                border-radius: 50%;
+                vertical-align: middle;
+                margin-right: 10px;
+            }
+
+            .popover .claiconnot {
+                font-size: 16px;
+                color: #fff;
+            }
+
+            .popover .textDate {
+                color: #5ca2ed !important;
+            }
+
+        .dropdown-menu.show {
+            left: -168px;
+        }
+
+        .btn.focus, .btn:focus {
+            outline: 0;
+            box-shadow: none;
+        }
+
+        .master_side_part ul li a {
+            display: flex;
+        }
+
+        .top-left1 {
+            width: 82%;
+            float: left;
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        .top-right1 {
+            width: 18%;
+            float: left;
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        @media (max-width: 1440px) {
+            .top-left1 {
+                width: 77%;
+                float: left;
+                padding-right: 15px;
+                padding-left: 15px;
+            }
+
+            .top-right1 {
+                width: 23%;
+                float: left;
+                padding-right: 15px;
+                padding-left: 15px;
+            }
+        }
+    </style>
+
+<style>.gq-iframe-container{z-index: 1000000000;position: fixed;top: 0px;display: block;left: 0px;height: 100%;width: 100%;backface-visibility: hidden;overflow-y: visible}iframe{animation: fadeIn 2s forwards;opacity: 1;height: 100%;position: relative;background: none;display: block;border: 0px none transparent;margin: 0px;padding: 0px;z-index: 2;width: 100%}.gq-button{background-color: #5667ff;color: #fff;cursor: pointer;padding: 10px 12px;border-radius: 4px;font-weight: 500;color: #fff;border: 1px solid #5667ff;font-family: Poppins, sans-serif;font-size: calc(6px 0.5vw)}.gq-button:hover{background-color: #3023d5;border-color: #3023d5}.gq-close{height: 400px;width: 400px}.gq-backdrop{min-height: 100%;transition: all 0.3s ease-out 0s;position: fixed;top: 0px;left: 0px;width: 100%;height: 100%;background: rgba(0, 0, 0, 0.6)}@keyframes fadeIn{from{opacity: 0}to{opacity: 1}}</style></head>
+
+<body class="bg-diary" style=" background-color: #f6f7fb;">
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-2 master_side_part p-0">
+                <div class="pr-0 pl-0">
+                    <div class="master_diary_logo px-3 pt-2">
+                            <p class="text-center mb-0">
+                                <img alt="image" class="img-fluid" style="" src="data:image/gif;base64,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">
+                            </p>
+
+                        <h6 class="text-center mb-3" style="font-weight: 600;">
+                            Rainbow International school
+                        </h6>
+                        <div class="dropdown  mr-1 bordr" id="AcidMasterDiv" style="display:none;">
+                            <select id="AcademicYearID" class="form-control dropdown-AcademicYear" style="color: #2d52e8; border-radius: 10px;"><option value="18">2026-2027</option><option value="17">2025-2026</option><option value="16">2024-2025</option><option value="15">2023-2024</option></select>
+                        </div>
+                    </div>
+                    <hr class="my-1">
+                    <div id="accordion">
+                        <ul class="list-group">
+                                    <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                        <a href="/StudentERP/Master_Student"><img src="https://scriptsnew.myclassboard.in/cdndatastatic/lms_assets/img1/home-01.svg" class="mr-1" width="20" height="20"> Student Home </a>
+                                    </li>
+
+                                    <li class="list-group-item m-0 font-14">
+                                        <h5 style="font-weight: bold;color: #de558d;margin-bottom:0px;border-bottom: #de558d 2px solid;padding-bottom: 5px;"> ERP </h5>
+                                    </li>
+                                                    <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                        <a href="javascript:void(0)" onclick="SendURL_SideMenu_Group('/StudentERP/SubLinkRelatedPages/', '14382', 'Report Cards')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/reportcard-icon.svg" class="mr-1" width="20" height="20"> Report Cards </a>
+                                                    </li>
+                                                    <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                        <a href="javascript:void(0)" onclick="SendURL_SideMenu_Group('/StudentERP/SubLinkRelatedPages/', '14385', 'Timetable')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/time-table-icon.svg" class="mr-1" width="20" height="20"> Timetable </a>
+                                                    </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/Connect/StudentAttendanceReport_NewFormat/', 'Attendance')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/attendance-icon.svg" class="mr-1" width="20" height="20"> Attendance </a>
+                                                </li>
+                                                    <li class="list-group-item m-0 font-14 left_side_part" onclick="applyleftside(this)">
+                                                        <a href="javascript:void(0)" onclick="SendURL_SideMenu_Group('/StudentERP/SubLinkRelatedPages/', '14388', 'Announcements')" class="activeanchor"> <img src="https://scriptsnew.myclassboard.in/cdndatastatic/lms_assets/img1/Annoucements.svg" class="mr-1" width="20" height="20"> Announcements </a>
+                                                    </li>
+                                                    <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                        <a href="javascript:void(0)" onclick="SendURL_SideMenu_Group('/StudentERP/SubLinkRelatedPages/', '14379', 'Pay/View Fees')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/fee-payment-icon.svg" class="mr-1" width="20" height="20"> Pay/View Fees </a>
+                                                    </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/LibraryDetailsPage/', 'Library')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/library-icon.svg" class="mr-1" width="20" height="20"> Library </a>
+                                                </li>
+                                                    <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                        <a href="javascript:void(0)" onclick="SendURL_SideMenu_Group('/StudentERP/SubLinkRelatedPages/', '14381', 'School Store')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/school-store-icon.svg" class="mr-1" width="20" height="20"> School Store </a>
+                                                    </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/StaffDiaryToStudent_CalenderView/', 'Class Room (Diary)')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/class-diary-icon.svg" class="mr-1" width="20" height="20"> Class Room (Diary) </a>
+                                                </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/StudentEvents/', 'School Calendar')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/school-calendar.svg" class="mr-1" width="20" height="20"> School Calendar </a>
+                                                </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/Gallery_Latest/', 'Activity \u0026 Photo Gallery')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/activity-photogallery-icon.svg" class="mr-1" width="20" height="20"> Activity &amp; Photo Gallery </a>
+                                                </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/StudentExamTypes/', 'Online Exam or Worksheet')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/online-exam-icon.svg" class="mr-1" width="20" height="20"> Online Exam or Worksheet </a>
+                                                </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/ParentStudentGatePass_New/', 'Gate Pass')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/gatepass-icon.svg" class="mr-1" width="20" height="20"> Gate Pass </a>
+                                                </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/StudentHealthDetails/', 'Health Details')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/health-details-icon.svg" class="mr-1" width="20" height="20"> Health Details </a>
+                                                </li>
+                                    <li class="list-group-item m-0 font-14">
+                                        <h5 style="font-weight: bold;color: #de558d;margin-bottom:0px;border-bottom: #de558d 2px solid;padding-bottom: 5px;"> LMS </h5>
+                                    </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/MyAssignments/', 'Assignments')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/assignments-icon.svg" class="mr-1" width="20" height="20"> Assignments </a>
+                                                </li>
+                                                <li class="list-group-item m-0 font-14" onclick="applyleftside(this)">
+                                                    <a href="javascript:void(0)" onclick="SendURL_SideMenu('/StudentERP/LearningStudent_New', 'Learning')"> <img src="https://cdndatastatic.myclassboard.com/lms_assets/img1/learning-league-icon.svg" class="mr-1" width="20" height="20"> Learning </a>
+                                                </li>
+
+
+
+                            
+
+
+                            <li class="list-group-item m-0 font-14 border-bottom" style="font-weight: bold;border-bottom: #b6a7a7 1px solid !important;padding:0px;">&nbsp;&nbsp;</li>
+                            <li class="list-group-item m-0 font-15">
+                                
+                                <p class="mb-0 text-muted pt-2 d-flex">
+                                    <a href="" target="_blank" class="mr-4"><img src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/logo-fb-simple-01.svg"></a>
+                                    <a href="" target="_blank" class="mr-4"><img src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/logo-twitter-01.svg"></a>
+                                    <a href="" target="_blank" class="mr-3"><img src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/logo-instagram-01.svg"></a>
+
+                                </p>
+
+                            </li>
+                            <li class="list-group-item m-0 font-14 border-bottom" style="font-weight: bold;border-bottom: #b6a7a7 1px solid !important;padding:0px;">&nbsp;&nbsp;</li>
+                            <li class="list-group-item m-0 font-15">
+                                <p class="mb-0 text-muted pt-2 d-flex">
+                                    <a class="mr-2" id="ancVision" onclick="resdata('Vision')" style="font-size: 12px; cursor: pointer; text-decoration: underline;">Vision</a>|
+                                    <a class="mr-2 ml-1" id="ancMision" onclick="resdata('Mission')" style="font-size: 12px; cursor: pointer; text-decoration: underline;">Mision</a>|
+                                    <a class="mr-2 ml-1" id="ancCoreVal" onclick="resdata('CoreValues')" style="font-size: 12px; cursor: pointer; text-decoration: underline;">CoreValues</a>
+                                </p>
+
+                            </li>
+
+                        </ul>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="col-lg-10">
+
+                <div class="row pt-2 form-group " id="dvtitleID">
+
+                    
+
+                    <div class="top-left1">
+                        <div class="p-2 border-radius-10" style=" background: #f0f2ff; box-shadow: 0px 2px 2px 0px #E1E1FF;">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-12 col-xs-12 pr-0">
+                                    <div class="card border-radius-10" style="box-shadow: 0px 4px 84px 0px rgba(0, 0, 0, 0.25);">
+                                        <div class="card-body p-2">
+                                            <div class="row">
+                                                <div class="col-auto pr-0">
+                                                    <div class="">
+                                                        <a href="javascript:void(0)" class="avatar rectangle avatar-70">
+
+                                                                <img class="img-fluid rounded-circle" src="https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/StudentProfilePics/32025/1003251810569220.png" style="width: 40px; height: 40px; ">
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="col pl-2">
+                                                        <h6 class="font-weight-bold text-dark mb-0" style="font-size: 13px;">  JOVAN FRANCIS FERNANDES </h6>
+                                                        <p class="font-weight-normal text-muted mb-0">23RIS0154 . Class X - A</p>
+                                                                                                    </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <div class="col-md-3 col-sm-12 col-xs-12">
+                                        <div>
+                                            <div>
+                                                <div class="minheight-130">
+                                                    <div class="row">
+                                                        <div class="col-md-12" style="text-align:center;">
+                                                            <div class="btn-part1" style="cursor:pointer;" onclick="AddSibilingData()">
+                                                                <p class="mb-1">
+                                                                    <img src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/add-sibiling-icon.svg">
+                                                                </p>
+                                                                <h6 style="background: var(--Gradient1, linear-gradient(275deg, #FF4600 0%, #FF6707 100.54%)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Add Sibiling</h6>
+                                                                
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="top-right1 pl-0">
+                        <div class="bg-white p-2 border-radius-10">
+                            <div class="row">
+                                <div class="col-lg-12 navbar navbar-expand-md">
+
+                                    <ul class="navbar-nav ml-auto ">
+                                        <li class="dropdown mr-3">
+                                            
+                                            
+                                            <a href="javascript:void(0)" class="mt-2" onclick="BindClassWall()">
+                                                <img src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/webp/class-wall-icon-02.webp" class="mt-2" width="30" alt="Class Wall" title="Class Wall">
+                                            </a>
+                                        </li>
+                                        <li class="dropdown mr-2">
+                                            <a href="https://play.google.com/store/apps/details?id=com.mcb.myclassboard.activity&amp;hl=en" target="_blank" class="mt-2"><img src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/playstoreimg.png" class="mt-2" width="30"></a>
+                                        </li>
+                                        <li class="dropdown mr-2">
+                                            <a href="https://itunes.apple.com/in/app/myclassboard-parent-portal/id1266182786?mt=8" class="mt-2" target="_blank">
+                                                <img src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/img/ios-icon.svg" class="" width="34" style="margin-top: 6px;">
+                                            </a>
+                                        </li>
+                                        <li class="dropdown mr-1">
+                                            <a href="javascript:void(0)" data-toggle="popover" data-placement="top" onclick="GetNotifications()">
+                                                <i class="fa fa-bell-o m-2" style="font-size: 24px;padding-top: 4px;color: #525252;"></i>
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn bg-transparent pb-0 pl-0 mr-0 pr-0 dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    <a href="#" id="Photo_Student" class="photouploadUserType" style="pointer-events: none;">
+                                                        <img src="https://scriptsnew.myclassboard.in/cdndatastatic/Images/NoPicture.gif" class="rounded-circle m-b-md" style="width: 30px;height: 30px;">
+                                                    </a>
+                                                </button>
+                                                <div class="dropdown-menu" style="">
+                                                    <a class="dropdown-item" href="/StudentERP/ERPURLRedirection?urlres=/StudentERP/ChangePassword"><i class="fa fa-unlock-alt" aria-hidden="true"></i> Change Password</a>
+                                                    <a class="dropdown-item" href="/Login/LogOut"><i class="fa fa-sign-out" aria-hidden="true"></i> Log out</a>
+                                                </div>
+                                            </div>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row pt-2" id="dvScrchID" style="display:none;">
+                    <div class="col-lg-10 pr-0">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <form onsubmit="return false">
+                                    <div class="input-group bg-white box-shadow-light mt-3 border-radius-10">
+                                        <select class="dropdowntxt w-25 p-2 border-0" id="ddlSearchElement">
+                                            <option value="1"> Notes</option>
+                                            <option value="3" selected=""> Videos</option>
+                                            <option value="2"> Study Material</option>
+                                            <option value="4"> Links</option>
+                                        </select>
+                                        <span class="dlSearchtxt"></span>
+                                        <input class="form-control py-2 border-0 border-left dropdowntxt textSearch inputSearch" type="text" id="txtSearchInput" placeholder="Search Anything">
+                                        <span class="input-group-append">
+                                            <button class="btn bg-white border-0 btnsearch font-25 pr-5" id="btnSearch" type="submit">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 navbar navbar-expand-md">
+                        <ul class="navbar-nav ml-2 pt-2">
+                            <li class="dropdown box-shadow-light card dropdowntxt mr-1 p-2">
+
+                                <a href="javascript:void(0)" data-toggle="popover" data-placement="top" onclick="GetNotifications()"><i class="fa fa-bell-o text-dark  m-2" style="    font-size: 25px;"></i></a>
+                                
+                            </li>
+                            <li class="card dropdowntxt box-shadow-light p-2">
+                                <a href="/Login/LogOut" class="font-25 text-dark">
+                                    <i class="fa fa-sign-out  m-2"></i>
+                                </a>
+                            </li>
+                        </ul>
+
+                        
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12" id="dvmain">
+
+    <div class="row form-group">
+
+        
+
+        <div class="col-lg-12 pb-2">
+
+                    <div class="Forms cursor-pointer mt-2 mb-2 actvvv box-shadow-dark border-radius-10 bg-white" onclick="ClickbuttonLink('/StudentERP/StudentAnnouncements/', 'Announcements', this,'Announcements')">
+                            <i class="https://scriptsnew.myclassboard.in/cdndatastatic/lms_assets/img1/Annoucements.svg" aria-hidden="true" style="padding-top: 2px;"></i> <span> &nbsp; Announcements </span>
+                    </div>
+                    <div class="Forms cursor-pointer mt-2 mb-2 " onclick="ClickbuttonLink('/StudentERP/StudentHandBookdetails/', 'News Letter', this,'News Letter')">
+                            <i class="fa fa-newspaper-o" aria-hidden="true" style="padding-top: 2px;"></i> <span> &nbsp; News Letter </span>
+                    </div>
+
+        </div>
+
+        <div id="StudentFormsDiv" class="col-lg-12"><div class="card p-4" id="divsearch">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="input-group">
+                <input class="form-control py-2" type="text" placeholder="search" id="filtertext">
+                <div class="input-group-append" style="height: 33px;">
+                    <button class="btn btn-outline-secondary" type="button">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4"></div>
+        <div class="col-md-2">
+            <select data-placeholder="-Select-" id="ddl_DateType" class="select2_demo_2 form-control">
+                <option value="1" selected="selected">Recent 10</option>
+                <option value="2">Last 7 Days</option>
+                <option value="3">Last 30 Days</option>
+                <option value="4">Till Date</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select id="ddlAcademicYearIDAnn" class="select2_demo_2 form-control"><option value="18" selected="">2026-2027</option><option value="17">2025-2026</option><option value="16">2024-2025</option><option value="15">2023-2024</option></select>
+        </div>
+    </div> 
+   
+</div>
+<div id="announcementDiv">
+<style>
+    .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+        color: #FF4600;
+        background-color: transparent;
+        border-bottom: #FF4600 1px solid;
+        font-weight: bold;
+    }
+
+    .nav-pills .nav-link {
+        border-radius: 0;
+        color: #6F767E;
+    }
+
+    .digital-port {
+        width: 100%;
+        background: url(https://cdndatastatic.myclassboard.com/assets/img/digital_bg_01.svg) center top;
+        background-repeat: no-repeat;
+        background-size: contain;
+        color: #fff;
+        height: 150px;
+        padding: 29px 24px 0px 114px;
+    }
+</style>
+<div class="col-lg-12" id="announcementDiv">
+
+    <div class="tabs-container">
+        <ul class="nav nav-pills border-bottom">
+            <li class="nav-item"><a data-toggle="pill" class="nav-link active" onclick="studentviewannouncementdetails('')" href="#"> All</a></li>
+            
+
+                <li class="nav-item"><a data-toggle="pill" class="nav-link" onclick="studentviewannouncementdetails('General')" href="#"> General</a></li>
+        </ul>
+    </div>
+    <div id="TabsViewannouncementDiv">
+<style type="text/css">
+    .badge {
+        background-color: #fd451b;
+        color: white;
+        padding: 13px 14px;
+        text-align: center;
+        border-radius: 25px;
+    }
+
+    .label {
+        display: inline;
+        padding: 0.2em 0.6em 0.3em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25em;
+    }
+
+    .Action {
+        color: #000000de;
+        text-decoration: none;
+        border: none;
+        box-shadow: none;
+        background-color: transparent;
+    }
+</style>
+<style>
+
+    .comment-badge {
+        display: inline-block;
+        background: #f0f0f0;
+        color: #333;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .comments-strip {
+        /*max-width: 700px;*/
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .header {
+        /* display: flex;*/
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .comment-toggle {
+        cursor: pointer;
+        /*  display: flex;*/
+        align-items: center;
+        gap: 8px;
+    }
+
+        .comment-toggle img {
+            width: 24px;
+            height: 24px;
+        }
+
+    .comment-count {
+        /* background: #007bff;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;*/
+        font-size: 15px;
+        color: black;
+    }
+
+    .comment {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .avatar {
+        margin-right: 10px;
+    }
+
+        .avatar img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+    .comment-body {
+        background: #f1f1f1;
+        padding: 5px 5px;
+        border-radius: 10px;
+        position: relative;
+    }
+
+        .comment-body::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 15px;
+            width: 0;
+            height: 0;
+            border-top: 10px solid transparent;
+            border-right: 10px solid #f1f1f1;
+            border-bottom: 10px solid transparent;
+        }
+
+    .user {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .text {
+        color: #333;
+    }
+
+    .comment-form {
+        margin-top: 20px;
+        position: relative;
+    }
+
+    .bubble-input {
+        background: #e0f0ff;
+        border-radius: 25px;
+        padding: 10px 70px 10px 15px;
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+        .bubble-input::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #e0f0ff;
+        }
+
+        .bubble-input textarea {
+            border: none;
+            background: transparent;
+            flex-grow: 1;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+        }
+
+        .bubble-input button {
+            position: absolute;
+            right: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+
+            .bubble-input button:hover {
+                background-color: #0056b3;
+            }
+
+    .comment-date {
+        color: gray;
+        font-size: 0.9em;
+        /* margin-left: 20px;*/
+        white-space: nowrap;
+    }
+
+    .commentInput {
+        cursor: default;
+    }
+</style>
+<div class="row mt-1">
+    <div class="col-lg-12">
+        <div class="row mt-3" id="divfirst">
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_83208">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('83208', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AS</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ASHWINI RASAL</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 03 Jun 2026, 04:00 PM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('83208', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">SILENT MESSAGE ART COMPETITION GR.X</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p>Dear Parents,</p><p>PFA the same.</p><p><br></p><p>Regards,</p><p>Vice Principal</p> 
+                                        <p></p>
+
+                                    </div>
+
+                                            <div class="col-lg-12 " style="text-align:left">
+
+                                                <label class="text-danger font-14">Attachments: &nbsp;</label>
+                                                <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;" onclick="ViewFile('0306261559442858.pdf', 'https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/Announcements/62026/0306261559442858.pdf',1)">
+                                                    <img src="https://cdndatastatic.myclassboard.com/img/pdf-icon.png" alt="Trulli" width="50" height="50">
+
+                                                </span> <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;">
+                                                    Art competition 26-27 FINAL.pdf
+                                                </span>
+
+                                            </div>
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_83198">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('83198', 'AN', 'ANUPAMA RAO', 'Class Teacher','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AN</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ANUPAMA RAO</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Teacher , &nbsp;&nbsp; 03 Jun 2026, 12:50 PM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('83198', 'AN', 'ANUPAMA RAO', 'Class Teacher','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">Ch 2 Polynomials Extra Questions</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p>Dear Students</p><p>PFA Ch 2 Polynomials Extra Questions</p><p>Regards</p>
+                                        <p></p>
+
+                                    </div>
+
+                                            <div class="col-lg-12 " style="text-align:left">
+
+                                                <label class="text-danger font-14">Attachments: &nbsp;</label>
+                                                <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;" onclick="ViewFile('0306261249459076.pdf', 'https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/Announcements/62026/0306261249459076.pdf',1)">
+                                                    <img src="https://cdndatastatic.myclassboard.com/img/pdf-icon.png" alt="Trulli" width="50" height="50">
+
+                                                </span> <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;">
+                                                    G X - Polynomials (3).pdf
+                                                </span>
+
+                                            </div>
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_83183">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('83183', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AS</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ASHWINI RASAL</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 03 Jun 2026, 08:57 AM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('83183', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">BLOOD DONATION DRIVE CIRCULAR GR.NUR-XII</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p><b>Dear Parents,</b></p><p>PFA the same.</p><p><br></p><p><b>Regards,</b></p><p><b>Vice Principal</b></p>
+                                        <p></p>
+
+                                    </div>
+
+                                            <div class="col-lg-12 " style="text-align:left">
+
+                                                <label class="text-danger font-14">Attachments: &nbsp;</label>
+                                                <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;" onclick="ViewFile('0306260923585028.pdf', 'https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/Announcements/62026/0306260923585028.pdf',1)">
+                                                    <img src="https://cdndatastatic.myclassboard.com/img/pdf-icon.png" alt="Trulli" width="50" height="50">
+
+                                                </span> <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;">
+                                                    Blood Donation Camp Circular 2026-27.pdf
+                                                </span>
+
+                                            </div>
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_82987">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('82987', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AS</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ASHWINI RASAL</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 30 May 2026, 11:05 AM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('82987', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">JUNE PLANNER GR.I-XII</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p>Dear Parents,</p><p>PFA the same.</p><p><br></p><p>Regards,</p><p>Vice Principal</p>
+                                        <p></p>
+
+                                    </div>
+
+                                            <div class="col-lg-12 " style="text-align:left">
+
+                                                <label class="text-danger font-14">Attachments: &nbsp;</label>
+                                                <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;" onclick="ViewFile('3005261105075704.pdf', 'https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/Announcements/52026/3005261105075704.pdf',1)">
+                                                    <img src="https://cdndatastatic.myclassboard.com/img/pdf-icon.png" alt="Trulli" width="50" height="50">
+
+                                                </span> <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;">
+                                                    JUNE 2026 PLANNER MCB .pdf
+                                                </span>
+
+                                            </div>
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_82985">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('82985', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AS</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ASHWINI RASAL</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 30 May 2026, 10:20 AM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('82985', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">SCHOOL RE-OPENING GR.I-X</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p><b>Dear Parents,</b></p><p><b>Greetings from Rainbow International School !!</b></p><p><b>Gentle Reminder !!</b></p><p>School will re-open on <b>1st June 2026, Monday ,</b> after the Summer Vacations for Grades I- X. Hope you had a good time with your children and family.&nbsp;</p><p><br></p><p><b>Regards,</b></p><p><b>Vice Principal</b></p>
+                                        <p></p>
+
+                                    </div>
+
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_82984">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('82984', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AS</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ASHWINI RASAL</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 30 May 2026, 10:15 AM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('82984', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">JUNE CANTEEN MENU</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p>Dear Parents,</p><p>PFA the same.</p><p><br></p><p>Regards,</p><p>Vice Principal</p>
+                                        <p></p>
+
+                                    </div>
+
+                                            <div class="col-lg-12 " style="text-align:left">
+
+                                                <label class="text-danger font-14">Attachments: &nbsp;</label>
+                                                <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;" onclick="ViewFile('3005261015271673.pdf', 'https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/Announcements/52026/3005261015271673.pdf',1)">
+                                                    <img src="https://cdndatastatic.myclassboard.com/img/pdf-icon.png" alt="Trulli" width="50" height="50">
+
+                                                </span> <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;">
+                                                    June Canteen Menu (2).pdf
+                                                </span>
+
+                                            </div>
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_82905">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('82905', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AS</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ASHWINI RASAL</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 26 May 2026, 11:00 AM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('82905', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">PAI DATESHEET AND PORTION PLANNER GRADE X</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p style="color: rgb(103, 106, 108);">Dear Parents,</p><p style="color: rgb(103, 106, 108);">PFA the same.</p><p style="color: rgb(103, 106, 108);"><br></p><p style="color: rgb(103, 106, 108);">Regards,</p><p style="color: rgb(103, 106, 108);">Vice Principal</p> 
+                                        <p></p>
+
+                                    </div>
+
+                                            <div class="col-lg-12 " style="text-align:left">
+
+                                                <label class="text-danger font-14">Attachments: &nbsp;</label>
+                                                <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;" onclick="ViewFile('2605261100154545.pdf', 'https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/Announcements/52026/2605261100154545.pdf',1)">
+                                                    <img src="https://cdndatastatic.myclassboard.com/img/pdf-icon.png" alt="Trulli" width="50" height="50">
+
+                                                </span> <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;">
+                                                    Grade X PA-I PORTION PLANNER  DATESHEET.pdf
+                                                </span>
+
+                                            </div>
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_82864">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('82864', 'FA', 'FAUZIA MALVI', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">FA</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">FAUZIA MALVI</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 21 May 2026, 11:59 AM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('82864', 'FA', 'FAUZIA MALVI', 'Class Coordinator','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">JUNE FEES REMINDER GRADES NUR TO X</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p style="color: rgb(103, 106, 108);"><span style="font-weight: 700;">Dear Parents ,</span></p><p style="color: rgb(103, 106, 108);"><span style="font-weight: 700;">A Gentle Reminder !!</span></p><p style="color: rgb(103, 106, 108);">This is to inform you all that if any parent wants to replace the June Month Fee PDC, or do NEFT/ GPay against the June PDC, or do Stop payment and pay via other mode, then it should be done on or before&nbsp;<span style="font-weight: 700;">27th May 2026</span>. No request will be entertained after 27th May 2026.&nbsp;</p><p style="color: rgb(103, 106, 108);">June PDCs will be deposited on<span style="font-weight: 700;">&nbsp;28th May 2026&nbsp;</span>by us in the bank to be credited on&nbsp;<span style="font-weight: 700;">1st June 2026</span>. After that bounce charges , if any, will be applicable to the parents .&nbsp;</p><p style="color: rgb(103, 106, 108);"><br></p><p style="color: rgb(103, 106, 108);"><span style="font-weight: 700;">Regards,</span></p><p style="color: rgb(103, 106, 108);"><span style="font-weight: 700;">Director Academics</span></p> 
+                                        <p></p>
+
+                                    </div>
+
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_82797">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        </a><div class="card mb-3"><a href="#" class="Action text-dark text-decoration-none">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('82797', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">AS</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">ASHWINI RASAL</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Coordinator , &nbsp;&nbsp; 09 May 2026, 09:44 AM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            </a><div class="card-body"><a href="#" class="Action text-dark text-decoration-none">
+                                </a><div class="row"><a href="#" class="Action text-dark text-decoration-none">
+                                    </a><div class="col-lg-12" onclick="fnAnnouncemetDiv('82797', 'AS', 'ASHWINI RASAL', 'Class Coordinator','General')"><a href="#" class="Action text-dark text-decoration-none">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">ADVANCED DRONE TECHNOLOGY SESSION</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p></a><p><a href="#" class="Action text-dark text-decoration-none"><span style="color: rgb(34, 34, 34); font-family: Arial;">Dear Parents,</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">Greetings!</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">National Technology Day is observed on 11th May to commemorate the achievements of scientists, researchers and engineers in the field of science and technology.</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">On the occasion of National Technology Day 2026, the Bharat Space Education Research Centre is organizing a free online session on Advanced Drone Technology. This awareness programme aims to enhance students’ understanding and provide exposure to current advancements in drone technology. CBSE has sent this information to all the schools.&nbsp;</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">Session Details:</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">- Date: 11th May 2026</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">- Time: 12:00 PM onwards</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">- Mode: Online</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">- Registration Fee: Nil</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">Registration Link:&nbsp;</span></a><a href="https://forms.gle/NNBBxDkwzb84efgD6" rel="noreferrer" target="_blank" data-saferedirecturl="https://www.google.com/url?q=https://forms.gle/NNBBxDkwzb84efgD6&amp;source=gmail&amp;ust=1778385780796000&amp;usg=AOvVaw1i_WuobrbAb-q3ZOrKfy9B" style="color: rgb(17, 85, 204); font-family: Arial;">https://forms.gle/<wbr>NNBBxDkwzb84efgD6</a><br style="color: rgb(34, 34, 34); font-family: Arial;"><br style="color: rgb(34, 34, 34); font-family: Arial;"><span style="color: rgb(34, 34, 34); font-family: Arial;">Let students attend this session and benefit from the same.&nbsp;</span><br style="color: rgb(34, 34, 34); font-family: Arial;"><br style="color: rgb(34, 34, 34); font-family: Arial;"><font color="#222222" face="Arial">Regards,</font></p><p><font color="#222222" face="Arial">Vice Principal</font></p> 
+                                        <p></p>
+
+                                    </div>
+
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    
+
+                </div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8 searchdata" id="divRow_82735">
+                    <a href="#" class="Action text-dark text-decoration-none">
+                        <div class="card mb-3">
+                            <div class="card-header" onclick="fnAnnouncemetDiv('82735', 'SH', 'SHRUTI SOMAN', 'Class Teacher','General')">
+                                <div class="row ">
+                                    <div class="col-lg-1">
+                                        <span class="badge" style="font-size: 9pt; font-weight: bold;">SH</span>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label style="font-weight: bold; font-size: 9pt; color: #000000; padding-left: 5px;">SHRUTI SOMAN</label>
+                                        <br>
+                                        <span style="color:#000; padding-left: 5px;">Class Teacher , &nbsp;&nbsp; 30 Apr 2026, 01:25 PM</span>
+
+                                    </div>
+                                    <div class="col-lg-3 text-right">
+                                        <span class="label label-default" style="background-color:#ffc459; font-weight: normal;">General</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-12" onclick="fnAnnouncemetDiv('82735', 'SH', 'SHRUTI SOMAN', 'Class Teacher','General')">
+
+                                        <h4 class="font-16" style="font-weight: bold; font-size:12pt; padding-top: 20px; color: #000000;">Art Portion and Stationery Status</h4>
+
+                                        <br>
+                                        <p class="example" style="padding-top:5px;">
+                                            </p><p> Dear Parents,</p><p><br></p><p>Kindly find the attachment file of Portion and Stationery used for March &amp; April Month.</p><p><br></p><p>Thank you.</p>
+                                        <p></p>
+
+                                    </div>
+
+                                            <div class="col-lg-12 " style="text-align:left">
+
+                                                <label class="text-danger font-14">Attachments: &nbsp;</label>
+                                                <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;" onclick="ViewFile('3004261325263044.pdf', 'https://cdn-mcb.myclassboard.com/gcscorp17schools/2/4/Announcements/42026/3004261325263044.pdf',1)">
+                                                    <img src="https://cdndatastatic.myclassboard.com/img/pdf-icon.png" alt="Trulli" width="50" height="50">
+
+                                                </span> <br>
+                                                <span style="vertical-align: -webkit-baseline-middle;">
+                                                    Grade X Art Portion &amp; Material.pdf
+                                                </span>
+
+                                            </div>
+                                                                    </div>
+                            </div>
+
+                        </div>
+                    </a>
+
+                </div>
+                <div class="col-lg-2"></div>
+        </div>
+        <div class="col-lg-2"></div>
+    </div>
+</div>
+
+
+
+<div id="announcementsdiv23" hidden=""></div>
+
+
+<div class="panel panel-default table-responsive" id="TabAfterGetBtnDiv" style="display:none;">
+    <div class="ibox-content">
+        <div id="TabDivTermAnalysis" style="display:none;"></div>
+    </div>
+</div>
+
+<div id="ModalPoppForContant" class="modal fade" role="dialog">
+    <div class="modal-dialog" style=" max-width: 800px; min-width:auto">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <!--<div class="modal-header">
+                <div class="col-lg-12">
+                    <div class="col-lg-1 pull-right">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>-->
+            
+            <!--</div>
+            </div>-->
+            <div class="modal-body" style="padding-top:0px;">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <form class="form-horizontal">
+                            <div class="row">
+                                <div class="col-lg-12" id="divGet_Data">
+                                    
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+            
+
+        </div>
+    </div>
+</div>
+
+
+
+
+<style>
+    button:not(:disabled) {
+        cursor: pointer;
+    }
+
+    .btn-white:hover {
+        background: #e2e2e2;
+        border-left: 3px solid #e75b8d;
+    }
+
+    .tooltip-inner {
+        background-color: #000;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+    });
+    function ViewFile(Filename1, filepath, IsDownloadFile) {
+        var siteurl = window.location.origin;
+        var Filename = escape(Filename1);
+        var IsCheck = null;
+        if (IsDownloadFile == 0) {
+            IsCheck = 0;
+        }
+        var val = siteurl + "/DocViewer/FileRead?FileName=" + Filename + "&FilePath=" + filepath + '&IsCheck=' + IsCheck;
+        window.open(val);
+    }
+    function fnleftarrow(rno) {
+        var RNO = rno - 1;
+        $.ajax({
+            url: '/StudentERP/ViewMoreAnnouncementDetails_Partial?RNo=' + RNO + '&Datetype=' +1 +'&TotalAnnouncements=' + '',
+            type: 'POST',
+            beforeSend: function () {
+                $("#loading").show();
+            },
+            success: function (result) {
+                $("#divfirst").show();
+                $("#divfirst").html(result);
+            },
+            complete: function () {
+                $("#loading").hide();
+            }
+        });
+    }
+
+    function fnrightarrow(rno) {
+
+        var RNO = rno + 1;
+        $.ajax({
+            url: '/StudentERP/ViewAnnouncementDetails_New?Datetype=' +1,
+            type: 'POST',
+            beforeSend: function () {
+                $("#loading").show();
+            },
+            success: function (result) {
+                $("#divfirst").show();
+                $("#divfirst").html(result);
+            },
+            complete: function () {
+                $("#loading").hide();
+            },
+        });
+    }
+
+    function Backtomain() {
+        $("#announcementDiv,#divsearch").show();
+        $("#TabsViewannouncementDiv").hide();
+    }
+
+
+
+    function ViewGalleryImage(id, str) {
+        $('#TabDivTermAnalysis').empty();
+
+        $("#loading").show();
+
+        $.ajax({
+            url: '/StudentERP/GetAnnouncementPhotoGallery',
+            type: 'POST',
+            data: { AnnouncementID: id, strdata: str },
+            success: function (result) {
+                $('#TabAfterGetBtnDiv').show();
+                $('#TabDivTermAnalysis').html(result).show();
+            },
+            complete: function () {
+                $("#loading").hide();
+            }
+
+        });
+    }
+
+    function fnAnnouncemetDiv(id, latter, name, type, AnnouncementType) {
+
+
+        var date = '1';
+        var Rno = '';
+        var TotalAnnouncements = '';
+        $.ajax({
+            url: '/StudentERP/ViewMoreAnnouncementDetails_Partial',
+            type: 'POST',
+            data: { AnnouncementID: id, Datetype: date, latters: latter, Name: name, UserType: type, AnnouncementType: AnnouncementType},
+            success: function (result) {
+                $('#divGet_Data').show();
+                $('#divGet_Data').html(result).show();
+                $("#ModalPoppForContant").modal('show');
+            },
+            complete: function () {
+                $("#loading").hide();
+            }
+
+        });
+
+    }
+
+    jQuery("#filtertext").keyup(function () {
+        var filter = jQuery(this).val();
+
+        jQuery("#divfirst .searchdata").each(function () {
+            if (jQuery(this).text().search(new RegExp(filter, "i")) < 0) {
+                jQuery(this).hide();
+
+            } else {
+                jQuery(this).show()
+            }
+        });
+    });
+
+    function toggleCommentInput(AnnouncementID) {
+        debugger;
+        if ($('#showcomments_' + AnnouncementID).css('display') == 'none' || $('#showcomments_' + AnnouncementID).css('display') == '') {
+          $("#loading").show();
+            $.ajax({
+                url: '/StudentERP/PostAnnouncementComments',
+                type: 'POST',
+                data: { AnnouncementID: AnnouncementID },
+                success: function (result) {
+                    $('#showcomments_' + AnnouncementID).html(result);
+                },
+                complete: function () {
+                    $('#showcomments_' + AnnouncementID).show();
+                    $('#btncmadd_' + AnnouncementID).html("Close Comments"); $("#loading").hide();
+                }
+
+            });
+        } else { $('#btncmadd_' + AnnouncementID).html("Add Comment"); $('#showcomments_' + AnnouncementID).hide(); }
+
+    }
+</script>
+</div>
+</div>
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+     studentviewannouncementdetails('');
+
+
+    });
+
+       function studentviewannouncementdetails(Announcement) {
+       
+           var strurl12 ="/StudentERP/ViewMoreAnnouncementDetails_New?AnnouncementType=" + Announcement + "&Datetype=" + '1';
+           $.ajax({
+               url: strurl12,
+               type: 'POST',
+               contentType: 'application/html',
+               //async: false,
+               beforeSend: function () {
+                   $("#loading").show();
+               },
+               success: function (content) {
+                   $('#TabsViewannouncementDiv').show().html(content);
+                   $("#announcementDiv,#divsearch").show();
+               },
+               complete: function () {
+                   $("#loading").hide();
+               },
+               error: function (e) { }
+           });
+           
+           
+
+        }
+
+</script>
+</div>
+
+<div id="ViewannouncementDiv"></div>
+<div id="TabsViewannouncementDiv"></div>
+
+<script>
+    var CurrentACID = 18;
+
+    
+    $(document).ready(function () {
+        GetAcademicYears();
+        //$("#filtertext").on("keyup", function () {
+        //    var value = $(this).val().toLowerCase();
+        //    $("#TabsViewannouncementDiv").filter(function () {
+        //        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        //    });
+        //});
+    });
+
+    function GetAcademicYears() {
+        $.ajax({
+            //url: '/Login/GetMappingAcademicYears',
+            url: '/Login/GetStudentAcademicYears',
+            type: 'POST',
+            data: { StudentEnrollmentID:'48675'},
+            async: false,
+            success: function (result) {
+                var ddl = $('#ddlAcademicYearIDAnn');
+                ddl.empty();
+                var markup = "";//"<option value='0'>-Select-</option>";
+                for (var x = 0; x < result.length; x++) {
+                    if (CurrentACID == result[x].Value) { markup += "<option value=" + result[x].Value + " selected>" + result[x].Text + "</option>"; } else { markup += "<option value=" + result[x].Value + ">" + result[x].Text + "</option>";}
+                    
+
+                }
+                $("#ddlAcademicYearIDAnn").html(markup).show();
+                $("#ddlAcademicYearIDAnn").val(CurrentACID);
+                
+
+            },
+            complete: function () {
+                studentAnnousment_get();
+            }
+        });
+    }
+
+    function studentAnnousment_get() {
+        var Datetype = $("#ddl_DateType :selected").val();
+        var AcademicYearID = $("#ddlAcademicYearIDAnn :selected").val();
+        url = "/StudentERP/StudentAnnouncements_GetNew?MessageType=" + 4 + "&Datetype=" + Datetype + "&AcademicYearID=" + AcademicYearID;
+        ajax(url, 'announcementDiv')
+        
+    }
+    $('#ddlAcademicYearIDAnn').change(function () {
+        studentAnnousment_get();
+    })
+    $('#ddl_DateType').change(function () {
+        studentAnnousment_get();
+    })
+
+   
+</script></div>
+
+    </div>
+
+<style>
+    .Forms {
+        float: left;
+        padding: 6px 16px;
+        margin-right: 10px;
+        font-size: 14px;
+        color: #696974;
+        letter-spacing: 0.1px;
+        font-weight: 500;
+        display: flex;
+        vertical-align: middle;
+        align-items: center;
+    }
+
+    .actvvv {
+        font-weight: bold;
+        border-right: #007bff 5px solid;
+        border-left: #007bff 5px solid;
+    }
+</style>
+
+
+
+<script type="text/javascript">
+
+            var urlpg = '/StudentERP/StudentAnnouncements/';
+            var ttipg1 = 'Announcements';
+
+    jQuery(function ($) {
+
+                ClickbuttonLink(urlpg, ttipg1,);
+            });
+
+    function ClickbuttonLink(strurl, title, id, title1) {
+                
+
+                $(id).addClass('box-shadow-dark border-radius-10 bg-white actvvv');
+                $(id).siblings().removeClass('box-shadow-dark border-radius-10 bg-white actvvv');
+
+        if (title1 != '' && title1 != undefined) { $('#titleDisp').html(title1); }
+
+                if (strurl != '' && strurl != undefined) {
+
+                    var arrURL = strurl.split('/'); var curURL = arrURL[2].split('?')[0];
+
+                    if (curURL == "CCEReportCard_parant" || curURL == "CCEReportCard_parant2" || curURL == "CCEEvaluationReportCard_parant" || curURL == "CCEEvaluationReportCard_Common" || curURL == "CCEReportCard_SilverOks" || curURL == "LearningAssessment_ParentReportCard" || curURL == "SubjectStudentReflectionType" || curURL == "OtherExamReportcrad_Parent" || curURL == "ClassTeacherRemarksReportCard_parant") {
+                        PrevACID = $('#AcademicYearID :selected').val();
+                        $('#AcidMasterDiv').show();
+
+                        LoadLinkPage(strurl);
+                        ACIDBit = 1;
+                        innerBit = 1;
+                    }
+                    else {
+                        var acid111 = $('#AcademicYearID :selected').val();
+                        var stacid = $("#hfstacid").val();
+                        if (stacid != 0 && stacid != acid111) {
+                            innerBit = 0;
+                            if (stacid != 0) { $("#AcademicYearID option[value=" + stacid + "]").prop("selected", true); }
+                            else { $("#AcademicYearID option[value=" + PrevACID + "]").prop("selected", true); }
+                            ACIDBit = 1;
+                            ACIDChange2();
+                            $('#AcidMasterDiv').hide();
+                            LoadLinkPage(strurl);
+
+                        }
+                        else {
+
+                            LoadLinkPage(strurl);
+                            ACIDBit = 1;
+                            $('#AcidMasterDiv').hide();
+                        }
+                    }
+                }
+
+            }
+
+            function LoadLinkPage(urllin) {
+
+                $.ajax({
+                    url: urllin,
+                    type: 'POST',
+                    beforeSend: function () { $('#loading').show(); },
+                    success: function (content) {
+                        var ddl = $("#StudentFormsDiv");
+                        ddl.empty();
+                        if (content.length > 0) {
+                            $("#StudentFormsDiv").html(content).show();
+                        }
+                    },
+                    complete: function () {
+                        $('#loading').hide();
+                    }
+                });
+            }
+
+            function linkCLick_Disabled(message) {
+
+                if (message == "" || message == " " || message == null || message == "undefined" || message == undefined) { message = "Dear Parent/Student,Kindly contact the School Office for more details."; }
+
+                swal({
+                    title: message,
+                    type: "warning"
+                });
+            }
+
+</script>
+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="divmanfields" style="display:none;"></div>
+
+    <div id="loading" class="text-center" style="display: none;">
+        <div class="spinner-border text-primary" style="margin-top:50vh"></div>
+    </div>
+
+    <div class="modal inmodal" id="DivmyCustomNotification" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg h-auto" style="width:68%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title"></h4><br>
+
+                </div>
+                <div class="modal-body h-auto w-auto overflow-auto">
+                    <div class="row p-l-lg  text-center">
+                        <span style="font-size:18px;"></span>
+                    </div>
+                    <div id="attachmentsdiv"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal inmodal" id="ModelSurveyForm" role="dialog" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-lg h-auto" style="max-width:80%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Survey Form</h4>
+                    
+                </div>
+                <div class="modal-body h-auto w-auto overflow-auto">
+                    <div id="DivSurveyFormData"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal inmodal" id="DivParentUndertakingModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg h-auto" style="width:68%">
+            <div class="modal-content">
+                <div class="modal-header">
+
+                        <h4 class="modal-title"></h4><br>
+                </div>
+                <div class="modal-body h-auto w-auto overflow-auto">
+                    <div class="col-lg-12 form-group">
+                        <span style="font-size:18px;"></span>
+                    </div>
+                    <div class="col-lg-12">
+                        <button type="button" class="btn btn-sm btn-primary btn-outline pull-right" onclick="fnnnSaveParentUndertakingDetails()">Accept</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal inmodal" id="DivParentUndertakingModalDymaicForm" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg h-auto" style="min-width:65%">
+            <div class="modal-content">
+                    <div class="modal-header">
+                        
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    </div>
+                <div class="modal-body h-auto w-auto overflow-auto">
+                    <div class="col-lg-12 form-group">
+                        <span style="font-size:18px;"></span>
+                    </div>
+                    <div class="col-lg-12" id="divDymaicFormID">
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="modal inmodal" id="UpdateEmailID" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="keyboard:false">
+            <div class="modal-dialog">
+                <div class="modal-content animated fadeIn">
+                    <div class="modal-header">
+                        <h5 class="title">Update Email ID</h5>
+                        <button type="button" class="close" data-dismiss="modal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="">
+
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="form-group">
+                                            <p>
+
+                                                Dear Parent,
+                                                Please update your Email Id for effective communication with school
+
+                                            </p>
+                                        <input id="Pointofcontactemailid" name="Email" type="text" placeholder="Enter Email ID" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12" style="margin-top:10px">
+                                        <div class="col-lg-6" id="btsave">
+                                            <input data-loading-text="Processing..." type="button" class="btn  btn-success" value="Update" id="BtnUpdate">
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    <div class="modal inmodal" id="divdata" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg h-auto" style="width:68%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title pull-left" id="divdataheader"></h4><br>
+                    <button type="button" class="close pull-right" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+
+                </div>
+                <div class="modal-body h-auto w-auto overflow-auto" id="divdatabody1" style="display:none">
+                    
+                </div>
+                <div class="modal-body h-auto w-auto overflow-auto" id="divdatabody2" style="display:none">
+                    
+                </div>
+                <div class="modal-body h-auto w-auto overflow-auto" id="divdatabody3" style="display:none">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input id="hfurl" value="/StudentERP/SubLinkRelatedPages/?MenuParentID=14388" type="hidden">
+    <input id="hfchannelid" value="0" type="hidden">
+    <input type="hidden" id="hfstacid" value="18">
+
+    <link rel="stylesheet" type="text/css" href="https://scriptsnew.myclassboard.in/cdndatastatic/css/jquery-ui.css">
+    <script type="text/javascript" async="" src="//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"></script><script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/jquery-ui-1.10.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+    <script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.23/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/chartist/chartist.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/chartist/chartist-plugin-tooltip.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/datapicker/bootstrap-datepicker.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-bs4.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/sweetalert/sweetalert.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/jquery.lazy.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/lightbox/js/lightbox.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/select2/select2.full.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/highcharts.js"></script>
+
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/assets/js/easyzoom.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/footable/footable.all.min.js"></script>
+
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/validate/jquery.validate.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/morris/raphael-2.1.0.min.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/morris/morris.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/virtual-select.min.js"></script>
+
+
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/plugins/clockpicker/clockpicker.js"></script>
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/js/webcam.js"></script>
+    <script src="https://erp-sdk.grayquest.com/v1.1/gqerp-sdk.min.js"></script>
+    <link rel="stylesheet" href="https://scriptsnew.myclassboard.in/cdndatastatic/Scripts/slick/slick.css">
+    <link rel="stylesheet" href="https://scriptsnew.myclassboard.in/cdndatastatic/Scripts/slick/slick-theme.css">
+    <script src="https://scriptsnew.myclassboard.in/cdndatastatic/Scripts/slick/slick.min.js"></script>
+    <style type="text/css">
+
+        .slick-prev:before, .slick-next:before {
+            color: #007bff !important;
+            font-size: 24px !important;
+        }
+
+        .slick-dots {
+            display: none !important;
+        }
+
+        .slick-prev {
+            left: 0px !important;
+        }
+
+        .slick-next {
+            right: -14px !important;
+        }
+
+        slick-slide {
+            padding-top: 10px;
+        }
+
+        .slick-dotted.slick-slider {
+            margin-bottom: 0px !important;
+        }
+    </style>
+
+    <script type="text/javascript">
+
+
+        var studentenrolid = '48675';
+        var ParentLoginAlertType = '0';
+        var ParentLoginAlertType1 = '0';
+        var chkalert = 'False';
+        var PrevACID = "";
+        var strurlData = "";
+        var ACIDBit = 0;
+        var OnlineDeactive12323 = '1';
+        var chkaccess123 = 'True';
+        var PageUrl123434 = '/StudentERP/StudentProfileDetails';
+        var ACID1234 = '18';
+        var chkpayonline1 = '1';
+        var APMFExists = '0';
+        var IsCheckPoint1 = '0';
+        var StudentExists = '0';
+        var StudentDocApproved = '1';
+        var mnflds = 0;
+        var MenuID1 = '0';
+        var Titel1 = '';
+        var StuAcademicyearID1 = '18';
+        var innerBit = 0;
+        var Email = '';
+        var chkIssueCert_main = '0';
+        var chkStuDocuments_main = '0';
+        var bal = '';
+        var ConsentFormTypeID = '';
+        var chkchat1='1';
+        var DynamicFormID='0';
+        var DynamicSumitTypeID='0';
+        var BranchID = '4';
+        var NxtFeeCount1 = '0';
+        var ttdata = '16 Jun 2026';
+        var InstallmentBal = '0';
+        var InstallmentName = '';
+
+
+      function applyleftside(id) {
+
+          $('li').removeClass("left_side_part");
+          $('a').removeClass("activeanchor");
+          $(id).addClass("left_side_part");
+          $(id).find('a').addClass("activeanchor");
+
+          var NavURL = $("#hfurl").val();
+          if (NavURL == "/StudentERP/LearningStudent_New") {
+              $("#dvScrchID").hide();
+              $("#dvtitleID").show();
+          }
+          else {
+              $("#dvScrchID").hide();
+              $("#dvtitleID").show();
+          }
+      }
+
+        $(document).ready(function () {
+
+           /* debugger;*/
+            if (APMFExists == 1 && IsCheckPoint1 == 0) { if (StudentExists == 1) { mnflds = 1; FunViewMandatoryFieldsView(); } }
+            //ParentLoginAlertType = 2;
+            if (mnflds == 0) {
+
+                if (ParentLoginAlertType1 == 8 && parseInt(NxtFeeCount1) > 0)
+                {
+                    funNextClassFeeAssignStudent();
+                }
+                else if (ParentLoginAlertType == 1) {
+                    //if (parseInt(FnlAnnuMessageID) > 0) {
+                    //    ViewAnnouncementDetails(FnlAnnuMessageID);
+                    //}
+                }
+                else if (ParentLoginAlertType == 2) {
+                   // bal = 10000;
+                    if (bal > 0) {
+                        swal({
+                            /* title: "Please clear the due amount  " + bal,*/
+                            title:"Fee Due Notification",
+                            text: "Dear Parent, we have observed that payment has not yet been received.\n Due amount as on " + ttdata +" is " + bal + "\n Please note that fine amounts will be applicable for all payments made after the due date.\n Thank you for considering this matter.",
+                            type: "warning",
+                            showCancelButton: true,
+                            confirmButtonColor: '#005be8',
+                            confirmButtonText: 'Pay Fee',
+                            cancelButtonText: "Close",
+                            closeOnConfirm: true,
+                            closeOnCancel: true
+                        },
+                            function (isConfirm) {
+                                if (isConfirm) {
+                                    var url11 = "https://" + window.location.host;
+                                    window.location = "/StudentERP/ERPURLRedirection?urlres=/StudentERP/SubLinkRelatedPages?MenuParentID=14379";
+
+                                    //SendURL('/Finance/PayOnline/');
+                                }
+                            });
+                    }
+                }
+                else if (ParentLoginAlertType == 11) {
+                    // bal = 10000;
+                    if (bal > 0) {
+                        swal({
+                            /* title: "Please clear the due amount  " + bal,*/
+                            title: "Fee Due Notification",
+                            text: "Dear Parent, we have observed that payment has not yet been received.\n Due amount as on " + ttdata + " is " + bal + " \n Thank you for considering this matter.",
+                            type: "warning",
+                            showCancelButton: true,
+                            confirmButtonColor: '#005be8',
+                            confirmButtonText: 'Pay Fee',
+                            cancelButtonText: "Close",
+                            closeOnConfirm: true,
+                            closeOnCancel: true
+                        },
+                            function (isConfirm) {
+                                if (isConfirm) {
+                                    var url11 = "https://" + window.location.host;
+                                    window.location = "/StudentERP/ERPURLRedirection?urlres=/StudentERP/SubLinkRelatedPages?MenuParentID=14379";
+
+                                    //SendURL('/Finance/PayOnline/');
+                                }
+                            });
+                    }
+                }  else if (ParentLoginAlertType1 == 10) {
+                    if (InstallmentBal > 0) {
+                        swal({
+                            /* title: "Please clear the due amount  " + bal,*/
+                            title:"Fee Due Notification",
+                            text: "Dear Parent, request you to make the " + InstallmentName + " fee payment of Rs.\n " + InstallmentBal + " in total before the due date.\n Administrative charges will be applied after the due date until the fee payment is made.\n Thank you.",
+                            type: "warning",
+                            showCancelButton: true,
+                            confirmButtonColor: '#005be8',
+                            confirmButtonText: 'Pay Fee',
+                            cancelButtonText: "Close",
+                            closeOnConfirm: true,
+                            closeOnCancel: true
+                        },
+                            function (isConfirm) {
+                                if (isConfirm) {
+                                    var url11 = "https://" + window.location.host;
+                                    window.location = "/StudentERP/ERPURLRedirection?urlres=/StudentERP/SubLinkRelatedPages?MenuParentID=14379";
+
+                                    //SendURL('/Finance/PayOnline/');
+                                }
+                            });
+                    }
+                }
+                else if (ParentLoginAlertType == 4) {
+                    if (chkalert == true || chkalert == 'True') {
+                        $('#DivParentUndertakingModal').modal({ backdrop: 'static', keyboard: false })
+                        $("#DivParentUndertakingModal").modal('show');
+                    }
+                    else {
+                        $("#DivParentUndertakingModal").modal('hide');
+                    }
+                }
+                else if (ParentLoginAlertType == 3) {
+
+                    if (chkalert == true || chkalert == 'True') {
+                        $("#DivmyCustomNotification").modal('show');
+                    }
+                    else {
+                        $("#DivmyCustomNotification").modal('hide');
+                    }
+
+                }
+                else if (ParentLoginAlertType == 5) {
+                    if (chkalert == true || chkalert == 'True') {
+                        $('#DivParentUndertakingModal').modal({ backdrop: 'static', keyboard: false })
+                        $("#DivParentUndertakingModal").modal('show');
+                    }
+                    else {
+                        $("#DivParentUndertakingModal").modal('hide');
+                    }
+                }
+                else if (ParentLoginAlertType == 9) {
+                    if (chkalert == true || chkalert == 'True') {
+                        $("#loading").show();
+                        $("#ModelSurveyForm").modal('show');
+                        $('#ModelSurveyForm').modal({
+                            backdrop: 'static',
+                            keyboard: false  // to prevent closing with Esc button (if you want this too)
+                        })
+                        $.ajax({
+                            url: '/StudentERP/StudentSurveyForm_ViewForm',
+                            type: 'POST',
+                            async: false,
+                            data: { StudentEnrollmentID: studentenrolid, SurveyFormID: DynamicFormID, PageTypeID:1 },
+                            success: function (result) {
+
+                                var ddl = $('#DivSurveyFormData');
+                                ddl.empty();
+                                $("#DivSurveyFormData").html(result).show();
+                            },
+                            complete: function () {
+
+                                $("#loading").hide();
+                            }
+                        });
+                    }
+                    else { $("#ModelSurveyForm").modal('hide'); }
+                }
+                else if (ParentLoginAlertType == 7) {
+
+                    if (chkalert == true || chkalert == 'True')
+                    {
+                        $("#loading").show();
+                        $.ajax({
+                            url: '/StudentERP/ViewDynamicFormReportForLoginNotification_Student',
+                            type: 'POST',
+                            async: false,
+                            data: { FormID: DynamicFormID, stuID: studentenrolid, BranchID: BranchID, Type: DynamicSumitTypeID },
+                            success: function (result) {
+
+                                var ddl = $('#divDymaicFormID');
+                                ddl.empty();
+                                $("#divDymaicFormID").html(result).show();
+                            },
+                            complete: function () {
+                                $("#loading").hide();
+                            }
+                        });
+                    }
+                    else { $("#DivParentUndertakingModalDymaicForm").modal('hide'); }
+                }
+                else { $("#DivParentUndertakingModalDymaicForm").modal('hide'); }
+
+                $.ajax({
+                    url: '/Login/GetStudentAcademicYears',
+                    type: 'POST',
+                    async: false,
+                    data: { StudentEnrollmentID: studentenrolid },
+                    success: function (result) {
+                        var ddl = $('#AcademicYearID');
+                        ddl.empty();
+                        var markup = "";//"<option value='0'>-Select-</option>";
+                        for (var x = 0; x < result.length; x++) {
+
+                            markup += "<option value=" + result[x].Value + ">" + result[x].Text + "</option>";
+
+                        }
+                        $("#AcademicYearID").html(markup).show();
+                        $("#AcademicYearID").val(ACID1234);
+
+                    },
+                    complete: function () {
+
+                        if (PageUrl123434 == "/StudentERP/SubLinkRelatedPages/") {
+
+                            SendURL_SideMenu_Group(PageUrl123434, MenuID1, Titel1);
+
+                        }
+                        else {
+
+                            var str2 = "/StudentERP/WhatsAppalerts";
+
+                            if ($("#hfurl").val() != "") {
+
+                                if (PageUrl123434.indexOf(str2) != -1) {
+                                    SendURL_SideMenu('/StudentERP/WhatsAppalerts', 'WhatsApp Alerts');
+                                }
+                                else if (PageUrl123434 == "/StudentERP/ChangePassword") {
+                                    SendURL_SideMenu('/StudentERP/ChangePassword', 'Change Password');
+                                }
+                                if ($("#hfurl").val() == "") {
+                                    window.location("");
+                                }
+                                else {
+                                    SendURL_SideMenu($("#hfurl").val(), '');
+                                }
+                            }
+                            else if (PageUrl123434.indexOf(str2) != -1) {
+                                SendURL_SideMenu('/StudentERP/WhatsAppalerts', 'WhatsApp Alerts');
+                            }
+                            else if (PageUrl123434 == "/StudentERP/ChangePassword") {
+                                SendURL_SideMenu('/StudentERP/ChangePassword', 'Change Password');
+                            }
+                            else if (PageUrl123434 == "") {
+                                SendURL(PageUrl123434);
+                            }
+                        }
+                    }
+                });
+
+                $("#AcademicYearID").change(function () {
+                    ACIDChange();
+                });
+
+                var urlcontain = $("#hfurl").val();
+
+                if (urlcontain.includes("/StudentERP/LearningStudent_New")) {
+                    $("#dvScrchID").hide();
+                    $("#dvtitleID").show();
+                }
+                else {
+                    $("#dvScrchID").hide();
+                    $("#dvtitleID").show();
+                }
+
+                $('li.active').addClass("left_side_part");
+
+                $('li.active').children('a').addClass("activeanchor");
+
+            }
+        });
+
+      var $loading = $('#loading').hide();
+
+      //$(document).ajaxStart(function () {
+      //    //ajax request went so show the loading image
+      //    $loading.show();
+      //}).ajaxStop(function () {
+      //    //got response so hide the loading image
+      //    $loading.hide();
+      //});
+
+      //window.addEventListener("beforeunload", function (event) {
+      //    $loading.show();//opens up a bootstrap modal with some animating loader icon
+      //});
+
+      $('div[data-toggle="collapse"]').click(function () {
+          $(this).siblings().children('i').addClass('fa-plus').removeClass('fa-minus');
+          $(this).find('i').toggleClass('fa-plus fa-minus');
+      });
+
+      function BindData(strurl) {
+          $("#hfurl").val(strurl);
+          if (strurl == "/StudentERP/PayOnline/" || (parseInt(OnlineDeactive12323) == 1 && chkaccess123 == 'True')) {
+              $.ajax({
+                  url: strurl,
+                  type: 'POST',
+                  beforeSend: function () { $("#loading").show(); },
+                  success: function (content) {
+                      $('#dvmain').html(content);
+                  },
+                  complete: function () { $("#loading").hide(); },
+                  error: function (e) { }
+              });
+          }
+          else {
+              $('#dvmain').html("");
+              swal({
+                  title: "Dear Parent/Student, Kindly contact the School Office for more details.",
+                  type: "warning"
+              });
+              if (chkpayonline1 == 1) { SendURL_SideMenu("/StudentERP/PayOnline/");}
+          }
+      }
+
+      function FunViewMandatoryFieldsView() {
+
+            $('#divmanfields').empty();
+
+            $("#loading").show();
+            $.ajax({
+                url: "/StudentERP/StudentAcademicPromotionMadatoryFieldsData/",
+                type: "POST",
+                success: function (result) {
+                    $('#divmanfields').html(result).show();
+                },
+                complete: function () { $("#loading").hide(); $("#mdlStuacdemicPrmotdata").modal('show'); }
+            });
+
+        }
+
+
+        function funNextClassFeeAssignStudent() {
+
+            $('#divmanfields').empty();
+
+            $("#loading").show();
+            $.ajax({
+                url: "/Connect/mdlAssignNewFeeplanforNextClass_Partial/",
+                type: "POST",
+                success: function (result) {
+                    $('#divmanfields').html(result).show();
+                },
+                complete: function () { $("#loading").hide(); }
+            });
+
+        }
+
+      $('#demostudents').slick({
+          dots: true,
+          infinite: false,
+          speed: 300,
+          slidesToShow: 2,
+          slidesToScroll: 2,
+          responsive: [
+              {
+                  breakpoint: 1024,
+                  settings: {
+                      slidesToShow: 2,
+                      slidesToScroll: 2,
+                      infinite: true,
+                      dots: true
+                  }
+              },
+              {
+                  breakpoint: 600,
+                  settings: {
+                      slidesToShow: 2,
+                      slidesToScroll: 2
+                  }
+              },
+              {
+                  breakpoint: 480,
+                  settings: {
+                      slidesToShow: 1,
+                      slidesToScroll: 1
+                  }
+              }
+          ]
+      });
+
+      function AddSibilingData() {
+          $("#loading").show();
+          $.ajax({
+              url: "/StudentERP/CheckSibilingDetails",
+              type: 'Post',
+              success: function (response) {
+
+                  if (response == 0) {
+                      swal({
+                          title: 'No Siblings are mapped to this student',
+                          type: 'warning',
+                      });
+
+                  } else {
+
+                      swal({
+                          title: "Sibling details added",
+                          type: 'success',
+                      });
+
+                      location.reload();
+                  }
+              },
+              complete: function () {
+                  $('#loading').hide();
+              }
+          });
+        }
+
+      function SendUrlBindWithID(strurl) {
+
+          $.ajax({
+              url: strurl.split('?')[0],
+              type: 'POST',
+              data: { Date: (strurl.split('?')[1]) },
+              beforeSend: function () { $("#loading").show(); },
+              //contentType: 'application/html',
+              success: function (content) {
+                  $('#dvmain').html(content);
+              },
+              complete: function () { $("#loading").hide(); },
+              error: function (e) { }
+          });
+
+      }
+
+      function SendURL_SideMenu(strurl, title) {
+
+
+          if ($("#hfchannelid").val() == 1 && $("#hfablycode").val() != "") {
+
+              channel1.presence.leaveClient($("#hfablycode").val());
+              channel.presence.leaveClient($("#hfablycode").val());
+              $("#hfchannelid").val(0);
+              $("#hfablycode").val('');
+          }
+          $("#hfurl").val(strurl);
+          if (title != '' && title != undefined) {
+              $('#titleDisp').html(title);
+          }
+          if (strurl != '' && strurl != undefined) {
+
+              var arrURL = strurl.split('/');
+              var curURL = arrURL[2].split('?')[0];
+              //|| curURL == "StudentAnnouncements"
+              if (curURL == "CCEReportCard_parant" || curURL == "StudentAttendanceReport_NewFormat" || curURL == "CCEReportCard_parant2" || curURL == "CCEEvaluationReportCard_parant" || curURL == "CCEEvaluationReportCard_Common" || curURL == "CCEReportCard_SilverOks"  || curURL == "LearningAssessment_ParentReportCard" || curURL == "SubjectStudentReflectionType" || curURL == "OtherExamReportcrad_Parent") {
+                  PrevACID = $('#AcademicYearID :selected').val();
+                  $('#AcidMasterDiv').show();
+                  strurlData = strurl;
+                  BindData(strurl);
+                  ACIDBit = 1;
+                  innerBit = 1;
+              }
+              else {
+                  var acid111 = $('#AcademicYearID :selected').val();
+                  if (StuAcademicyearID1 != 0 && StuAcademicyearID1 != acid111) {
+                      innerBit = 0;
+
+                      if (StuAcademicyearID1 != 0) {
+                          $("#AcademicYearID option[value=" + StuAcademicyearID1 + "]").prop("selected", true);
+                      }
+                      else {
+                          $("#AcademicYearID option[value=" + PrevACID + "]").prop("selected", true);
+                      }
+                      ACIDBit = 1;
+                      ACIDChange2();
+
+                      $('#AcidMasterDiv').hide();
+                      strurlData = strurl;
+                      BindData(strurl);
+                  } else {
+
+                      BindData(strurl);
+                      ACIDBit = 1;
+                      $('#AcidMasterDiv').hide();
+                  }
+              }
+          }
+
+      }
+
+      function SendURL_SideMenu_Group(strurl,mnpaid, title) {
+
+
+          if ($("#hfchannelid").val() == 1 && $("#hfablycode").val() != "") { channel1.presence.leaveClient($("#hfablycode").val()); channel.presence.leaveClient($("#hfablycode").val());                $("#hfchannelid").val(0);                $("#hfablycode").val('');            }
+
+          $("#hfurl").val(strurl);
+
+          if (title != '' && title != undefined) { $('#titleDisp').html(title); }
+
+          if (strurl != '' && strurl != undefined) {
+
+              var arrURL = strurl.split('/'); var curURL = arrURL[2].split('?')[0];
+
+              if (curURL == "CCEReportCard_parant" || curURL == "StudentAttendanceReport_NewFormat" || curURL == "CCEReportCard_parant2" || curURL == "CCEEvaluationReportCard_parant" || curURL == "CCEEvaluationReportCard_Common" || curURL == "CCEReportCard_SilverOks"  || curURL == "LearningAssessment_ParentReportCard" || curURL == "SubjectStudentReflectionType" || curURL == "OtherExamReportcrad_Parent") {
+                  PrevACID = $('#AcademicYearID :selected').val();
+                  $('#AcidMasterDiv').show();
+                  strurlData = strurl;
+                  BindData_Group(strurl + "?MenuParentID=" + mnpaid);
+                  ACIDBit = 1;
+                  innerBit = 1;
+              }
+              else {
+                  var acid111 = $('#AcademicYearID :selected').val();
+                  if (StuAcademicyearID1 != 0 && StuAcademicyearID1 != acid111) {
+                      innerBit = 0;
+
+                      if (StuAcademicyearID1 != acid111) {
+                            $("#AcademicYearID option[value=" + acid111 + "]").prop("selected", true);
+                      }
+                     else if (StuAcademicyearID1 != 0) {
+                          $("#AcademicYearID option[value=" + StuAcademicyearID1 + "]").prop("selected", true);
+                      }
+                      else {
+                          $("#AcademicYearID option[value=" + PrevACID + "]").prop("selected", true);
+                      }
+                      ACIDBit = 1;
+                      ACIDChange2();
+
+                      $('#AcidMasterDiv').hide();
+                      strurlData = strurl;
+                      BindData_Group(strurl + "?MenuParentID=" + mnpaid);
+                  } else {
+
+                      BindData_Group(strurl + "?MenuParentID=" + mnpaid);
+                      ACIDBit = 1;
+                      $('#AcidMasterDiv').hide();
+                  }
+              }
+          }
+
+      }
+
+      function BindData_Group(strurl) {
+          $("#hfurl").val(strurl);
+          if (strurl == "/StudentERP/PayOnline/" || (parseInt(OnlineDeactive12323) == 1 && chkaccess123 == 'True')) {
+              $.ajax({
+                  url: strurl,
+                  type: 'POST',
+                  beforeSend: function () { $("#loading").show(); },
+                  success: function (content) {
+                      $('#dvmain').html(content);
+                  },
+                  complete: function () { $("#loading").hide(); },
+                  error: function (e) { }
+              });
+          }
+          else {
+              $('#dvmain').html("");
+              swal({
+                  title: "Dear Parent/Student, Kindly contact the School Office for more details.",
+                  type: "warning"
+              });
+              if (chkpayonline1 == 1) { SendURL_SideMenu("/StudentERP/PayOnline/"); }
+          }
+      }
+
+      function SendURL(strurl) {
+
+          $("#hfurl").val(strurl);
+
+          if (strurl != '' && strurl != undefined) {
+
+
+              if (strurl == "/StudentERP/PayOnline/" || (parseInt(OnlineDeactive12323) == 1 && chkaccess123 == 'True')) {
+
+                  $.ajax({
+                      url: strurl,
+                      type: 'POST',
+                      beforeSend: function () { $("#loading").show(); },
+                      success: function (content) { $('#dvmain').html(content); },
+                      complete: function () { $("#loading").hide(); },
+                      error: function (e) { }
+                  });
+              }
+              else {
+                  $('#dvmain').html("");
+                  swal({
+                      title: "Dear Parent/Student, Kindly contact the School Office for more details.",
+                      type: "warning"
+                  });
+                  if (chkpayonline1 == 1) { SendURL_SideMenu("/StudentERP/PayOnline/"); }
+              }
+          }
+      }
+
+      function ACIDChange2() {
+          var AcademicYearID = $("#AcademicYearID :selected").val();
+          if (AcademicYearID > 0) {
+              $.ajax({
+                  url: '/Login/ChangeAcademicYear?AcademicYearID=' + AcademicYearID,
+                  type: 'POST',
+                  success: function (result) {
+
+                      if (ACIDBit == 1) { ACIDBit = 2; }
+
+                  }
+              });
+          }
+      }
+
+      function ACIDChange() {
+          var AcademicYearID = $("#AcademicYearID :selected").val();
+          if (AcademicYearID > 0) {
+              $.ajax({
+                  url: '/Login/ChangeAcademicYear?AcademicYearID=' + AcademicYearID,
+                  type: 'POST',
+                  success: function (result) {
+
+                      if (ACIDBit == 1) { ACIDBit = 2; }
+
+                      if (PageUrl123434 == "/StudentERP/SubLinkRelatedPages/") { SendURL_SideMenu_Group(PageUrl123434, MenuID1, Titel1); }
+                      else {
+                          if (strurlData != "") { SendURL(strurlData); }
+                          else if ($("#hfurl").val() != "") { SendURL($("#hfurl").val()); }
+                          else if (PageUrl123434 == "") { SendURL(PageUrl123434); }
+                      }
+                  }
+              });
+          }
+      }
+
+      function ajax(strurl, bindingDiv) {
+          $.ajax({
+              url: strurl,
+              type: 'POST',
+              contentType: 'application/html',
+              //async: false,
+              beforeSend: function () {
+                  $("#loading").show();
+              },
+              success: function (content) {
+                  $('#' + bindingDiv).show().html(content);
+              },
+              complete: function () {
+                  $("#loading").hide();
+              },
+              error: function (e) { }
+          });
+      }
+
+      function SendURL_SideMenu_Disabled(message) {
+
+          if (message == "" || message == " " || message == null || message == "undefined" || message == undefined) {
+              message = "Dear Parent/Student,Kindly contact the School Office for more details.";
+          }
+          swal({
+              title: message,
+              type: "warning"
+          });
+        }
+
+      function GetNotifications() {
+
+          $("#dvmain").load('/StudentERP/MasterStudent_Partial').show();
+          $("#dvtitleID").hide();
+        }
+
+        function BindClassWall() {
+            if (chkchat1 == 1) {
+              //  SendURL_SideMenu("/StudentERP/SubLinkRelatedPages?MenuParentID=14389");
+                //$("#dvmain").load('/StudentERP/SubLinkRelatedPages?MenuParentID=14389').show();
+                //$("#dvtitleID").hide();
+                SendURL_SideMenu("/StudentERP/ParentLoginGetClassWallData");
+            }
+            else {
+                SendURL_SideMenu("/StudentERP/ParentLoginGetClassWallData");
+            }
+        }
+
+      document.onkeydown = function (e) {
+          if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 85 || e.keyCode === 117)) { return false; }
+          else { return true; }
+        };
+
+      $(document).keypress("u", function (e) {
+          if (e.ctrlKey) { return false; }
+          else { return true; }
+      });
+
+      $(document).ready(function () {
+          $("html").on("contextmenu", function () {
+              return false;
+          });
+      });
+
+      document.onkeydown = function (e) {
+          if (e.keyCode == 123) {
+              return false;
+          }
+          if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+              return false;
+          }
+          if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+              return false;
+          }
+          if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+              return false;
+          }
+
+          if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) {
+              return false;
+          }
+      }
+
+
+        function fnnnSaveParentUndertakingDetails() {
+
+            $("#loading").show();
+
+
+            $.ajax({
+                url: '/StudentERP/SaveParentUndertakingDetails/',
+                type: 'POST',
+                data: {
+                    typeid: ConsentFormTypeID
+
+                },
+                success: function (result)
+                {
+                    swal({
+                        title: result,
+                        type:'success'
+                    });
+                    $("#DivParentUndertakingModal").modal('hide');
+                    location.reload();
+                },
+                complete: function () {
+                    $("#loading").hide();
+                }
+            });
+        }
+
+        function resdata(type) {
+
+            $("#divdatabody1,#divdatabody2,#divdatabody3").hide();
+
+            $('#divdata').modal({ backdrop: 'static', keyboard: false })
+            $("#divdata").modal('show');
+            if (type == 'Vision') {
+                $("#ancMision").attr('style', 'font-size: 12px;cursor:pointer;text-decoration: underline;');
+                $("#ancCoreVal").attr('style', 'font-size: 12px;cursor:pointer;text-decoration: underline;');
+                $("#ancVision").attr('style', 'font-size: 12px;cursor:pointer;text-decoration:underline;');
+                $("#ancVision").css('font-weight', 'bold');
+                $('#divdataheader').html('Vision');
+                $('#divdatabody1').show();
+            }
+
+            else if (type == 'Mission') {
+                $("#ancMision").attr('style', 'font-size: 12px;cursor:pointer;text-decoration:underline;');
+                $("#ancCoreVal").attr('style', 'font-size: 12px;cursor:pointer;text-decoration: underline;');
+                $("#ancVision").attr('style', 'font-size: 12px;cursor:pointer;text-decoration: underline;');
+                $("#ancMision").css('font-weight', 'bold');
+
+                $('#divdataheader').html('Mission');
+                $('#divdatabody2').show()
+
+            }
+            else if (type == 'CoreValues') {
+                $("#ancMision").attr('style', 'font-size: 12px;cursor:pointer;text-decoration: underline;');
+                $("#ancCoreVal").attr('style', 'font-size: 12px;cursor:pointer;text-decoration:underline');
+                $("#ancVision").attr('style', 'font-size: 12px;cursor:pointer;text-decoration: underline;');
+                $("#ancCoreVal").css('font-weight', 'bold');
+
+                $('#divdataheader').html('Core Values');
+                $('#divdatabody3').show();
+            }
+        }
+
+    </script>
+
+
+<div id="lightboxOverlay" tabindex="-1" class="lightboxOverlay" style="display: none;"></div><div id="lightbox" tabindex="-1" class="lightbox" style="display: none;"><div class="lb-outerContainer"><div class="lb-container"><img class="lb-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt=""><div class="lb-nav"><a class="lb-prev" aria-label="Previous image" href=""></a><a class="lb-next" aria-label="Next image" href=""></a></div><div class="lb-loader"><a class="lb-cancel"></a></div></div></div><div class="lb-dataContainer"><div class="lb-data"><div class="lb-details"><span class="lb-caption"></span><span class="lb-number"></span></div><div class="lb-closeContainer"><a class="lb-close"></a></div></div></div></div></body></html>
