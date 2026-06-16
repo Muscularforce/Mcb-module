@@ -50,6 +50,34 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
     }
   };
 
+  const getAttachmentDetails = (url: string | undefined) => {
+    if (!url) return { filename: 'file', ext: 'FILE', colorClass: 'file' };
+    const filename = decodeURIComponent(url.split('/').pop() || 'file');
+    const ext = filename.split('.').pop()?.toLowerCase() || 'file';
+    
+    let label = 'FILE';
+    let colorClass = 'file';
+    
+    if (['pdf'].includes(ext)) {
+      label = 'PDF';
+      colorClass = 'pdf';
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+      label = 'IMAGE';
+      colorClass = 'image';
+    } else if (['doc', 'docx'].includes(ext)) {
+      label = 'WORD';
+      colorClass = 'word';
+    } else if (['xls', 'xlsx'].includes(ext)) {
+      label = 'EXCEL';
+      colorClass = 'excel';
+    } else if (['ppt', 'pptx'].includes(ext)) {
+      label = 'POWERPOINT';
+      colorClass = 'ppt';
+    }
+    
+    return { filename, ext: label, colorClass };
+  };
+
   return (
     <div
       className={`modal-overlay ${entry ? 'open' : ''}`}
@@ -97,17 +125,45 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
             <p className="modal-content-text">{entry.content}</p>
 
             <div className="modal-section-title">Attachment</div>
-            {entry.attachment_url ? (
-              <a
-                href={entry.attachment_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="modal-download-btn"
-              >
-                <Download size={18} />
-                Download / Open File
-              </a>
-            ) : (
+            {entry.attachment_url ? (() => {
+              const { filename, ext, colorClass } = getAttachmentDetails(entry.attachment_url);
+              return (
+                <div className={`attachment-card ${colorClass}`}>
+                  <div className="attachment-icon-wrapper">
+                    <FileText size={24} className="attachment-icon" />
+                    <span className="attachment-badge">{ext}</span>
+                  </div>
+                  <div className="attachment-info">
+                    <div className="attachment-filename" title={filename}>
+                      {filename}
+                    </div>
+                    <div className="attachment-source">
+                      MyClassboard Secure CDN Document
+                    </div>
+                  </div>
+                  <div className="attachment-actions">
+                    <a
+                      href={entry.attachment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="attachment-action-btn view"
+                    >
+                      View
+                    </a>
+                    <a
+                      href={entry.attachment_url}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="attachment-action-btn download"
+                      title="Download File"
+                    >
+                      <Download size={14} />
+                    </a>
+                  </div>
+                </div>
+              );
+            })() : (
               <div className="modal-no-attachment">
                 <Paperclip size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
                 No attachment available for this entry

@@ -3,7 +3,7 @@ import { fetchEntries } from '../api';
 import { Entry, EntryType } from '../types';
 import { EntryCard } from './EntryCard';
 import { EntryModal } from './EntryModal';
-import { GraduationCap, Search, Book, FileText, Bell, Inbox } from 'lucide-react';
+import { Search, Book, FileText, Bell, Inbox } from 'lucide-react';
 
 type FilterType = 'all' | EntryType;
 
@@ -69,11 +69,30 @@ export const Dashboard: React.FC = () => {
     <div className="app-container">
       {/* Header */}
       <header className="header">
-        <div className="header-logo">
-          <GraduationCap size={32} />
+        <div className="header-logo-container">
+          <div className="header-logo-wrapper">
+            <svg viewBox="0 0 24 24" className="mcb-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="url(#logo-grad-1)" />
+              <path d="M2 17L12 22L22 17" stroke="url(#logo-grad-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 12L12 17L22 12" stroke="url(#logo-grad-1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <defs>
+                <linearGradient id="logo-grad-1" x1="2" y1="2" x2="22" y2="17" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#3b82f6" />
+                  <stop offset="1" stopColor="#8b5cf6" />
+                </linearGradient>
+                <linearGradient id="logo-grad-2" x1="2" y1="12" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#f59e0b" />
+                  <stop offset="1" stopColor="#ef4444" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="mcb-logo-text">
+              <span className="logo-my">my</span>
+              <span className="logo-classboard">classboard</span>
+            </div>
+          </div>
         </div>
-        <h1>MCB Dashboard</h1>
-        <p className="header-subtitle">Your centralized hub for learning and updates</p>
+        <p className="header-subtitle">Rainbow International School - Student Portal Hub</p>
       </header>
 
       {/* Stats */}

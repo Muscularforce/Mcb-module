@@ -23,6 +23,13 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
+# Reconfigure stdout to handle Unicode characters (like Hindi) in Windows console
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 # ---------------- Config ----------------
 
 PORTAL_URLS = [
@@ -200,7 +207,7 @@ def extract_diary_entries(html, diary_date):
             badge = node.find("span", class_=lambda c: c and "badge" in c)
             teacher = node.find("span", style=lambda s: s and "darkgray" in s)
             summary_div = node.find("div", class_="summery-class")
-            attachment_link = node.find("a", onclick=re.compile(r"ViewFile\(", re.I))
+            attachment_link = node.find(onclick=re.compile(r"ViewFile", re.I))
             if not attachment_link:
                 for a in node.find_all("a", href=True):
                     h = (a.get("href") or "").strip()
@@ -298,7 +305,7 @@ def extract_generic_cards(html, diary_date, default_type):
 
         # Try to get attachment
         attachment_url = None
-        attachment_link = node.find("a", onclick=re.compile(r"ViewFile\(", re.I))
+        attachment_link = node.find(onclick=re.compile(r"ViewFile", re.I))
         if not attachment_link:
             for a in node.find_all("a", href=True):
                 h = (a.get("href") or "").strip()
@@ -334,6 +341,165 @@ def extract_generic_cards(html, diary_date, default_type):
         })
 
     return entries
+
+
+def scrape_worksheets(page, diary_date, scrape_all=False):
+    print("   Locating worksheet card rows...")
+    html = page.content()
+    soup = BeautifulSoup(html, "html.parser")
+    
+    assignments = []
+    for div in soup.find_all("div", onclick=re.compile(r"ViewQuestion", re.I)):
+        onclick = div.get("onclick", "")
+        match = re.search(r"ViewQuestion\s*\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)", onclick)
+        if match:
+            assignment_id, qb_question_id, rno = match.groups()
+            assignments.append({
+                "assignment_id": assignment_id,
+                "qb_question_id": qb_question_id,
+                "rno": rno
+            })
+            
+    print(f"   Found {len(assignments)} worksheets on the page.")
+    if not assignments:
+        return []
+        
+    batch_size = 10
+    results = []
+    
+    print(f"   Fetching worksheet details via browser AJAX in batches of {batch_size}...")
+    for i in range(0, len(assignments), batch_size):
+        batch = assignments[i:i+batch_size]
+        try:
+            batch_results = page.evaluate(
+                """
+                async (batch_items) => {
+                    const Subject = $("#ddl_SubjectID :selected").val() || "";
+                    const Type = $('input[name="optradio"]:checked').val() || "";
+                    
+                    const list = [];
+                    const promises = batch_items.map(ass => {
+                        return new Promise((resolve) => {
+                            $.ajax({
+                                url: '/StudentERP/ViewOnlineAssignmentQuestions_student',
+                                type: 'POST',
+                                data: {
+                                    SubjectName: Subject,
+                                    Type: Type,
+                                    RNo: ass.rno
+                                },
+                                success: function (result) {
+                                    resolve({ rno: ass.rno, html: result, success: true });
+                                },
+                                error: function (xhr, status, err) {
+                                    resolve({ rno: ass.rno, error: err || status, success: false });
+                                }
+                            });
+                        });
+                    });
+                    return await Promise.all(promises);
+                }
+                """,
+                batch
+            )
+            results.extend(batch_results)
+        except Exception as e:
+            print(f"   [FAIL] Failed to evaluate batch {i//batch_size + 1}: {e}")
+            
+    ws_entries = []
+    
+    for ass, res in zip(assignments, results):
+        if not res or not res.get("success"):
+            print(f"   [WARNING] Row {ass['rno']} details failed to load: {res.get('error') if res else 'None'}")
+            continue
+            
+        detail_html = res["html"]
+        detail_soup = BeautifulSoup(detail_html, "html.parser")
+        
+        title = "Worksheet"
+        title_b = detail_soup.find("b")
+        if title_b:
+            title = clean_text(title_b.get_text())
+            
+        title = extract_worksheet_title(title)
+        
+        attachment_url = None
+        for a in detail_soup.find_all(onclick=re.compile(r"ViewFile", re.I)):
+            onclick = a.get("onclick", "")
+            match = re.search(r"ViewFile\s*\(\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)", onclick)
+            if match:
+                filename, url, rno_val = match.groups()
+                if url.strip():
+                    attachment_url = url.strip()
+                    break
+                    
+        def find_bold_val(label):
+            span = detail_soup.find("span", string=re.compile(re.escape(label), re.I))
+            if span:
+                bold = span.find_next("b")
+                if bold:
+                    return clean_text(bold.get_text())
+            text_node = detail_soup.find(string=re.compile(re.escape(label), re.I))
+            if text_node:
+                parent = text_node.parent
+                bold = parent.find_next("b")
+                if bold:
+                    return clean_text(bold.get_text())
+            return ""
+            
+        ass_date_str = find_bold_val("Assignment Date")
+        sub_date_str = find_bold_val("Submission Date")
+        max_marks = find_bold_val("Max Marks")
+        
+        chapters = ""
+        chapters_span = detail_soup.find("span", string=re.compile(r"Chapters\s*:", re.I))
+        if chapters_span:
+            parent_row = chapters_span.find_parent("div", class_="row")
+            if parent_row:
+                chapters = clean_text(parent_row.get_text())
+                chapters = chapters.replace("Chapters :", "").strip()
+                
+        description = ""
+        desc_span = detail_soup.find("span", string=re.compile(r"Assignment description\s*:", re.I))
+        if desc_span:
+            parent_p = desc_span.find_parent("p")
+            if parent_p:
+                description = clean_text(parent_p.get_text())
+                description = description.replace("Assignment description :", "").strip()
+                
+        summary_parts = []
+        if max_marks:
+            summary_parts.append(f"Max Marks : {max_marks}")
+        if ass_date_str:
+            summary_parts.append(f"Assignment Date : {ass_date_str}")
+        if sub_date_str:
+            summary_parts.append(f"Submission Date : {sub_date_str}")
+        if chapters:
+            summary_parts.append(f"Chapters : {chapters}")
+        if description:
+            summary_parts.append(f"Assignment description : {description}")
+            
+        summary = " | ".join(summary_parts) if summary_parts else "No details available."
+        
+        entry_date = diary_date
+        if ass_date_str:
+            try:
+                parsed = datetime.strptime(ass_date_str, "%d %b %Y")
+                entry_date = parsed.strftime("%d %b %Y")
+            except ValueError:
+                pass
+                
+        ws_entries.append({
+            "subject": title,
+            "type": "Worksheet",
+            "teacher": "Teacher",
+            "summary": summary,
+            "attachment_url": attachment_url,
+            "date": entry_date,
+            "_source": "Worksheet"
+        })
+        
+    return ws_entries
 
 
 # ---------------- Main Scraper ----------------
@@ -445,7 +611,12 @@ def scrape_mcb(diary_date, scrape_all=False):
         else:
             page.keyboard.press("Enter")
 
-        page.wait_for_timeout(10000)
+        # Wait for the dashboard/assignments tab link to load, confirming we are successfully logged in and stable
+        try:
+            page.wait_for_selector("a:has-text('Assignments'), a:has-text('Diary')", timeout=35000)
+            page.wait_for_timeout(4000)
+        except Exception:
+            page.wait_for_timeout(10000)
         print("   [OK] Login successful")
 
         all_entries = []
@@ -461,21 +632,31 @@ def scrape_mcb(diary_date, scrape_all=False):
                     """
                     async ({url, dates}) => {
                         const resList = [];
-                        for (const date of dates) {
-                            try {
-                                const res = await fetch(url, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    },
-                                    body: new URLSearchParams({ DiaryDate: date }).toString()
-                                });
-                                const html = await res.text();
-                                resList.push({ date, html });
-                            } catch (e) {
-                                resList.push({ date, html: '', error: e.message });
-                            }
+                        const batchSize = 15;
+                        for (let i = 0; i < dates.length; i += batchSize) {
+                            const batch = dates.slice(i, i + batchSize);
+                            const promises = batch.map(async (date) => {
+                                try {
+                                    const controller = new AbortController();
+                                    const id = setTimeout(() => controller.abort(), 12000);
+                                    const res = await fetch(url, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        },
+                                        body: new URLSearchParams({ DiaryDate: date }).toString(),
+                                        signal: controller.signal
+                                    });
+                                    clearTimeout(id);
+                                    const html = await res.text();
+                                    return { date, html };
+                                } catch (e) {
+                                    return { date, html: '', error: e.message };
+                                }
+                            });
+                            const batchRes = await Promise.all(promises);
+                            resList.push(...batchRes);
                         }
                         return resList;
                     }
@@ -570,10 +751,7 @@ def scrape_mcb(diary_date, scrape_all=False):
                     """)
                     page.wait_for_timeout(1200)
 
-            ass_html = page.content()
-            ws_entries = extract_generic_cards(ass_html, diary_date, "Worksheet")
-            for e in ws_entries:
-                e["_source"] = "Worksheet"
+            ws_entries = scrape_worksheets(page, diary_date, scrape_all)
             all_entries.extend(ws_entries)
             print(f"   [OK] Found {len(ws_entries)} worksheets")
         except Exception as e:

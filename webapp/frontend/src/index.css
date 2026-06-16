@@ -460,6 +460,11 @@ body::after {
   font-weight: 500;
 }
 
+.entry-card.diary .attachment-indicator { color: var(--color-diary); }
+.entry-card.worksheet .attachment-indicator { color: var(--color-worksheet); }
+.entry-card.worksheet.answer-key .attachment-indicator { color: var(--color-answerkey); }
+.entry-card.announcement .attachment-indicator { color: var(--color-announcement); }
+
 .click-hint {
   font-size: 0.75rem;
   color: var(--text-tertiary);
@@ -715,4 +720,196 @@ body::after {
   .modal-header { padding: 24px 20px 0; }
   .modal-body { padding: 20px; }
   .modal-panel { border-radius: var(--radius-lg); }
+}
+
+/* ═══════════════════════════════════════════
+   MYCLASSBOARD LOGO BRANDING
+   ═══════════════════════════════════════════ */
+.header-logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.header-logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(17, 21, 39, 0.4);
+  border: 1px solid var(--glass-border);
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+  transition: var(--transition-base);
+}
+
+.header-logo-wrapper:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 32px -4px rgba(99, 102, 241, 0.15);
+}
+
+.mcb-logo-svg {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.3));
+}
+
+.mcb-logo-text {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.logo-my {
+  color: #3b82f6; /* Premium Blue */
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+.logo-classboard {
+  color: #f59e0b; /* Premium Orange/Yellow */
+  text-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+/* ═══════════════════════════════════════════
+   PREMIUM ATTACHMENT CARD
+   ═══════════════════════════════════════════ */
+.attachment-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(16px);
+  transition: var(--transition-base);
+  margin-top: 8px;
+  text-align: left;
+}
+
+.attachment-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.attachment-icon-wrapper {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.attachment-icon {
+  color: var(--text-secondary);
+}
+
+.attachment-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  line-height: 1;
+  color: white;
+}
+
+/* File type specific colors */
+.attachment-card.pdf .attachment-icon-wrapper { background: rgba(244, 63, 94, 0.1); }
+.attachment-card.pdf .attachment-icon { color: #f43f5e; }
+.attachment-card.pdf .attachment-badge { background: #f43f5e; box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4); }
+
+.attachment-card.image .attachment-icon-wrapper { background: rgba(16, 185, 129, 0.1); }
+.attachment-card.image .attachment-icon { color: #10b981; }
+.attachment-card.image .attachment-badge { background: #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4); }
+
+.attachment-card.word .attachment-icon-wrapper { background: rgba(59, 130, 246, 0.1); }
+.attachment-card.word .attachment-icon { color: #3b82f6; }
+.attachment-card.word .attachment-badge { background: #3b82f6; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4); }
+
+.attachment-card.excel .attachment-icon-wrapper { background: rgba(16, 185, 129, 0.15); }
+.attachment-card.excel .attachment-icon { color: #10b981; }
+.attachment-card.excel .attachment-badge { background: #10b981; }
+
+.attachment-card.ppt .attachment-icon-wrapper { background: rgba(245, 158, 11, 0.1); }
+.attachment-card.ppt .attachment-icon { color: #f59e0b; }
+.attachment-card.ppt .attachment-badge { background: #f59e0b; }
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-filename {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.attachment-source {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.attachment-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attachment-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: var(--transition-fast);
+}
+
+.attachment-action-btn.view {
+  padding: 8px 16px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+}
+
+.attachment-action-btn.view:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.attachment-action-btn.download {
+  width: 34px;
+  height: 34px;
+  color: white;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+  border: none;
+  box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.3);
+}
+
+.attachment-action-btn.download:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -2px rgba(99, 102, 241, 0.5);
 }
