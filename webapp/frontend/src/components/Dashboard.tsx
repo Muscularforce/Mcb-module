@@ -3,10 +3,12 @@ import { fetchEntries } from '../api';
 import { Entry, EntryType } from '../types';
 import { EntryCard } from './EntryCard';
 import { EntryModal } from './EntryModal';
-import { Search, Book, FileText, Bell, Inbox } from 'lucide-react';
+import { Search, Book, FileText, Bell, Inbox, ChevronDown } from 'lucide-react';
 import jsRdLogo from '../assets/js_rd_logo.png';
 
 type FilterType = 'all' | EntryType;
+
+const PAGE_SIZE = 6;
 
 export const Dashboard: React.FC = () => {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -14,6 +16,7 @@ export const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     const loadData = async () => {
@@ -24,6 +27,11 @@ export const Dashboard: React.FC = () => {
     };
     loadData();
   }, []);
+
+  // Reset visible count when filter or search changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeFilter, searchQuery]);
 
   const filteredEntries = useMemo(() => {
     let result = entries;
@@ -43,6 +51,9 @@ export const Dashboard: React.FC = () => {
 
     return result;
   }, [entries, activeFilter, searchQuery]);
+
+  const visibleEntries = filteredEntries.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredEntries.length;
 
   const counts = useMemo(() => ({
     diary: entries.filter(e => e.type === 'diary').length,
@@ -163,7 +174,7 @@ export const Dashboard: React.FC = () => {
             <p>No entries match your search or filter.</p>
           </div>
         ) : (
-          filteredEntries.map(entry => (
+          visibleEntries.map(entry => (
             <EntryCard
               key={entry.id}
               entry={entry}
@@ -172,6 +183,22 @@ export const Dashboard: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* View More Button */}
+      {hasMore && (
+        <div className="view-more-container">
+          <button
+            className="view-more-btn"
+            onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+          >
+            <ChevronDown size={18} />
+            View More
+            <span className="view-more-count">
+              {filteredEntries.length - visibleCount} remaining
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="dashboard-footer">
