@@ -1039,3 +1039,58 @@ body::after {
   }
 }
 
+/* Header Top Branding styles */
+.header-top-branding {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  padding: 6px 16px;
+  border-radius: 99px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  transition: var(--transition-base);
+}
+
+.header-top-branding:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.25);
+}
+
+.header-brand-by {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.header-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.header-brand-logo {
+  height: 20px;
+  width: auto;
+  filter: invert(1) brightness(1.2);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header-brand-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, #ffffff 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+

@@ -70,6 +70,14 @@ export const Dashboard: React.FC = () => {
     <div className="app-container">
       {/* Header */}
       <header className="header">
+        <div className="header-top-branding">
+          <span className="header-brand-by">Made by</span>
+          <a href="https://discord.gg/966WM3djK" target="_blank" rel="noopener noreferrer" className="header-brand-link" title="Join J's R&D Discord Server">
+            <img src={jsRdLogo} alt="J's R&D" className="header-brand-logo" />
+            <span className="header-brand-name">J's R&D</span>
+          </a>
+        </div>
+
         <div className="header-logo-container">
           <div className="header-logo-wrapper">
             <svg viewBox="0 0 24 24" className="mcb-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
