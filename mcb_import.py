@@ -1205,6 +1205,19 @@ def push_to_api(entries):
 # ---------------- Entry Point ----------------
 
 if __name__ == "__main__":
+    # Check restricted hours (12 AM to 6 AM IST)
+    force_run = "--force" in sys.argv or "--all" in sys.argv
+    if not force_run:
+        from datetime import timezone, timedelta
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now_ist = datetime.now(ist)
+        if 0 <= now_ist.hour < 6:
+            print(f"Skipping scraper run: current time is {now_ist.strftime('%I:%M %p')} IST (restricted hours: 12 AM to 6 AM). Use --force to override.")
+            sys.exit(0)
+
+    # Filter out --force from sys.argv
+    sys.argv = [a for a in sys.argv if a != "--force"]
+
     scrape_all = "--all" in sys.argv
     
     # Filter out --all from sys.argv for date parsing
