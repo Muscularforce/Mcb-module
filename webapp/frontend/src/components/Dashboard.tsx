@@ -4,6 +4,7 @@ import { Entry, EntryType } from '../types';
 import { EntryCard } from './EntryCard';
 import { EntryModal } from './EntryModal';
 import { Search, Book, FileText, Bell, Inbox } from 'lucide-react';
+import jsRdLogo from '../assets/js_rd_logo.png';
 
 type FilterType = 'all' | EntryType;
 
@@ -163,6 +164,30 @@ export const Dashboard: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="dashboard-footer">
+        <div className="footer-content">
+          <div className="footer-left">
+            <span className="footer-label">Made by</span>
+            <div className="company-info-wrapper">
+              <img src={jsRdLogo} alt="J's R&D" className="company-logo-img" />
+              <div className="company-text-wrapper">
+                <span className="company-name">J's R&D</span>
+                <span className="company-subtitle">Jovan's Research and Development</span>
+              </div>
+            </div>
+          </div>
+          <div className="footer-right">
+            <a href="https://discord.gg/966WM3djK" target="_blank" rel="noopener noreferrer" className="discord-link-btn">
+              <svg viewBox="0 0 127.14 96.36" className="discord-icon-svg" fill="currentColor">
+                <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.45-5c.87-.64,1.72-1.32,2.53-2a75.46,75.46,0,0,0,72.77,0c.81.7,1.66,1.38,2.53,2a68.61,68.61,0,0,1-10.45,5,78.5,78.5,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.06-18.83C129.86,48.86,123.63,26,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.83,46,53.83,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.07,46,96.07,53,91,65.69,84.69,65.69Z"/>
+              </svg>
+              <span>Join Discord Server</span>
+            </a>
+          </div>
+        </div>
+      </footer>
 
       {/* Modal */}
       <EntryModal entry={selectedEntry} onClose={() => setSelectedEntry(null)} />

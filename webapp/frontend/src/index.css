@@ -913,3 +913,129 @@ body::after {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px -2px rgba(99, 102, 241, 0.5);
 }
+
+/* ═══════════════════════════════════════════
+   DASHBOARD FOOTER & BRANDING
+   ═══════════════════════════════════════════ */
+.dashboard-footer {
+  margin-top: 64px;
+  padding: 32px 0 16px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.company-info-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.company-logo-img {
+  height: 36px;
+  width: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  filter: invert(1) brightness(1.2) contrast(1.1);
+  opacity: 0.85;
+  transition: var(--transition-base);
+}
+
+.company-logo-img:hover {
+  filter: invert(1) brightness(1.4) contrast(1.25);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.company-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.company-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.company-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.footer-right {
+  display: flex;
+}
+
+.discord-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  background: #5865F2;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.25);
+  transition: var(--transition-base);
+}
+
+.discord-link-btn:hover {
+  background: #4752C4;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.45);
+  color: #ffffff;
+}
+
+.discord-icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Footer Responsive styles */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .footer-left {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .company-info-wrapper {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .company-text-wrapper {
+    align-items: center;
+  }
+}
+
