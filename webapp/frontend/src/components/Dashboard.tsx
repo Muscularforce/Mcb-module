@@ -194,7 +194,7 @@ export const Dashboard: React.FC = () => {
                 <span className="logo-classboard">classboard</span>
               </div>
             </div>
-            <p className="header-subtitle">Rainbow International School — Student Portal Hub</p>
+            <p className="header-subtitle">The Better Mcb</p>
           </div>
         </header>
 
