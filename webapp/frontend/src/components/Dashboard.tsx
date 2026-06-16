@@ -174,11 +174,12 @@ export const Dashboard: React.FC = () => {
             <p>No entries match your search or filter.</p>
           </div>
         ) : (
-          visibleEntries.map(entry => (
+          visibleEntries.map((entry, i) => (
             <EntryCard
               key={entry.id}
               entry={entry}
               onClick={setSelectedEntry}
+              index={i}
             />
           ))
         )}

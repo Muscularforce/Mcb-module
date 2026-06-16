@@ -5,23 +5,24 @@ import { Book, FileText, Bell, Calendar, User, Paperclip, ArrowRight } from 'luc
 interface Props {
   entry: Entry;
   onClick: (entry: Entry) => void;
+  index?: number;
 }
 
-export const EntryCard: React.FC<Props> = ({ entry, onClick }) => {
-  const isAnswerKey = entry.type === 'worksheet' && 
-    (entry.title.toLowerCase().includes('answerkey') || 
-     entry.title.toLowerCase().includes('answer key') || 
-     entry.title.toLowerCase().includes(' ak') || 
+export const EntryCard: React.FC<Props> = ({ entry, onClick, index = 0 }) => {
+  const isAnswerKey = entry.type === 'worksheet' &&
+    (entry.title.toLowerCase().includes('answerkey') ||
+     entry.title.toLowerCase().includes('answer key') ||
+     entry.title.toLowerCase().includes(' ak') ||
      entry.title.endsWith(' AK') ||
-     entry.title.toLowerCase().includes('ans key') || 
+     entry.title.toLowerCase().includes('ans key') ||
      entry.title.toLowerCase().includes('anskey'));
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'diary': return <Book size={20} />;
-      case 'worksheet': return <FileText size={20} />;
-      case 'announcement': return <Bell size={20} />;
-      default: return <Book size={20} />;
+      case 'diary': return <Book size={14} />;
+      case 'worksheet': return <FileText size={14} />;
+      case 'announcement': return <Bell size={14} />;
+      default: return <Book size={14} />;
     }
   };
 
@@ -35,49 +36,66 @@ export const EntryCard: React.FC<Props> = ({ entry, onClick }) => {
     }
   };
 
+  const formattedDate = new Date(entry.date).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
+  });
+
   return (
-    <div className={`entry-card ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`} onClick={() => onClick(entry)}>
-      <div className="entry-card-top">
-        <div className={`entry-type-icon ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
+    <div
+      className={`entry-card ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}
+      style={{ animationDelay: `${index * 55}ms` }}
+      onClick={() => onClick(entry)}
+    >
+      {/* Animated gradient border ring */}
+      <div className="card-border-ring" />
+
+      {/* Shimmer sweep on hover */}
+      <div className="card-shimmer" />
+
+      {/* Top section */}
+      <div className="card-top">
+        <span className={`card-type-pill ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
           {getIcon(entry.type)}
-        </div>
-        <span className={`entry-badge ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
           {getLabel(entry.type)}
         </span>
+        {entry.attachment_url && (
+          <span className="card-attach-dot" title="Has attachment">
+            <Paperclip size={11} />
+          </span>
+        )}
       </div>
 
-      <div className="entry-title">{entry.title}</div>
+      {/* Title */}
+      <h3 className="card-title">{entry.title}</h3>
 
-      <div className="entry-meta">
+      {/* Meta chips */}
+      <div className="card-meta-row">
         {entry.teacher && (
-          <span className="entry-meta-item">
-            <User size={13} />
+          <span className="meta-chip">
+            <User size={11} />
             {entry.teacher}
           </span>
         )}
-        <span className="entry-meta-item">
-          <Calendar size={13} />
-          {new Date(entry.date).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          })}
+        <span className="meta-chip">
+          <Calendar size={11} />
+          {formattedDate}
         </span>
       </div>
 
-      <div className="entry-content">{entry.content}</div>
+      {/* Content preview */}
+      <p className="card-preview">{entry.content}</p>
 
-      <div className="entry-footer">
+      {/* Footer */}
+      <div className="card-footer">
         {entry.attachment_url ? (
-          <span className="attachment-indicator">
-            <Paperclip size={14} />
+          <span className="card-attach-badge">
+            <Paperclip size={12} />
             Attachment
           </span>
-        ) : (
-          <span />
-        )}
-        <span className="click-hint">
-          View details <ArrowRight size={12} />
+        ) : <span />}
+        <span className="card-cta">
+          View details
+          <ArrowRight size={13} />
         </span>
       </div>
     </div>
