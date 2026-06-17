@@ -7,6 +7,7 @@ import { Search, Book, FileText, Bell, Inbox, ChevronDown, Sparkles } from 'luci
 import jsRdLogo from '../assets/js_rd_logo.png';
 
 type FilterType = 'all' | EntryType;
+import { supabase } from '../lib/supabase';
 
 const PAGE_SIZE = 6;
 
@@ -75,6 +76,7 @@ export const Dashboard: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [readIds, setReadIds] = useState<Set<string | number>>(new Set());
   const spotlightRef = useRef<HTMLDivElement>(null);
 
   /* cursor spotlight */
@@ -85,17 +87,140 @@ export const Dashboard: React.FC = () => {
     }
   }, []);
 
+  // Helper to mark a category of entries as read
+  const markCategoryAsRead = useCallback((type: FilterType, loadedEntries: Entry[]) => {
+    setReadIds(prev => {
+      const next = new Set(prev);
+      let changed = false;
+      
+      const targets = loadedEntries.filter(e => {
+        if (type === 'all') return true;
+        return e.type === type;
+      });
+      
+      targets.forEach(e => {
+        if (!next.has(e.id)) {
+          next.add(e.id);
+          changed = true;
+        }
+      });
+      
+      if (changed) {
+        localStorage.setItem('mcb_read_entry_ids', JSON.stringify(Array.from(next)));
+        return next;
+      }
+      return prev;
+    });
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       const data = await fetchEntries();
       setEntries(data);
+      
+      // Initialize readIds from localStorage
+      const stored = localStorage.getItem('mcb_read_entry_ids');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as (string | number)[];
+          setReadIds(new Set(parsed));
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        // First visit: mark everything older than 2 days as read.
+        if (data.length > 0) {
+          const dateObjects = data.map(e => new Date(e.date).getTime()).filter(t => !isNaN(t));
+          const latestTime = dateObjects.length > 0 ? Math.max(...dateObjects) : Date.now();
+          const twoDaysAgo = latestTime - (2 * 24 * 60 * 60 * 1000);
+          
+          const autoReadIds = data
+            .filter(e => {
+              const t = new Date(e.date).getTime();
+              return isNaN(t) || t < twoDaysAgo;
+            })
+            .map(e => e.id);
+            
+          setReadIds(new Set(autoReadIds));
+          localStorage.setItem('mcb_read_entry_ids', JSON.stringify(autoReadIds));
+        }
+      }
+      
       setLoading(false);
     };
     loadData();
   }, []);
 
+  // Setup real-time Supabase database listener for instant updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('entries_realtime_sync')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'entries'
+        },
+        (payload) => {
+          const item = payload.new as any;
+          if (!item) return;
+
+          let mappedType: 'diary' | 'worksheet' | 'announcement' = 'diary';
+          if (item.entry_type === 'Worksheet') mappedType = 'worksheet';
+          else if (item.entry_type === 'Announcement') mappedType = 'announcement';
+          else if (item.entry_type === 'DiaryEntry') mappedType = 'diary';
+
+          const newEntry: Entry = {
+            id: item.id,
+            type: mappedType,
+            title: item.subject || 'Untitled',
+            content: item.summary || '',
+            date: item.date || '',
+            teacher: item.teacher || '',
+            attachment_url: item.attachment_url || undefined
+          };
+
+          setEntries(prev => {
+            if (prev.some(e => e.id === newEntry.id)) return prev;
+            const updated = [newEntry, ...prev];
+            return updated.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Mark selected category as read automatically
+  useEffect(() => {
+    if (entries.length > 0 && !loading) {
+      markCategoryAsRead(activeFilter, entries);
+    }
+  }, [activeFilter, entries, loading, markCategoryAsRead]);
+
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeFilter, searchQuery]);
+
+  const handleEntryClick = useCallback((entry: Entry) => {
+    setSelectedEntry(entry);
+    setReadIds(prev => {
+      if (!prev.has(entry.id)) {
+        const next = new Set(prev);
+        next.add(entry.id);
+        localStorage.setItem('mcb_read_entry_ids', JSON.stringify(Array.from(next)));
+        return next;
+      }
+      return prev;
+    });
+  }, []);
+
+  const getUnreadCount = useCallback((type: EntryType) => {
+    return entries.filter(e => e.type === type && !readIds.has(e.id)).length;
+  }, [entries, readIds]);
 
   const filteredEntries = useMemo(() => {
     let result = entries;
@@ -242,16 +367,24 @@ export const Dashboard: React.FC = () => {
 
         {/* Filters */}
         <div className="filter-tabs">
-          {filters.map(f => (
-            <button
-              key={f.key}
-              className={`filter-tab ${activeFilter === f.key ? 'active' : ''}`}
-              onClick={() => setActiveFilter(f.key)}
-            >
-              {f.icon}
-              {f.label}
-            </button>
-          ))}
+          {filters.map(f => {
+            const count = f.key !== 'all' ? getUnreadCount(f.key as EntryType) : 0;
+            return (
+              <button
+                key={f.key}
+                className={`filter-tab ${activeFilter === f.key ? 'active' : ''}`}
+                onClick={() => setActiveFilter(f.key)}
+              >
+                {f.icon}
+                {f.label}
+                {count > 0 && (
+                  <span className="tab-badge">
+                    {count > 9 ? '9+' : count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Grid */}
@@ -268,7 +401,7 @@ export const Dashboard: React.FC = () => {
               <EntryCard
                 key={entry.id}
                 entry={entry}
-                onClick={setSelectedEntry}
+                onClick={handleEntryClick}
                 index={i}
               />
             ))
