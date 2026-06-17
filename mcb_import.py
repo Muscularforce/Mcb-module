@@ -632,6 +632,11 @@ def extract_generic_cards(html, diary_date, default_type):
         if not text or len(text) < 10:
             continue
 
+        # Filter out the student's profile card from being scraped as an announcement/worksheet
+        text_upper = text.upper()
+        if "JOVAN FRANCIS" in text_upper or "23RIS0154" in text_upper:
+            continue
+
         summary = text[:500]
         title = default_type
         if default_type == "Worksheet":
@@ -1139,8 +1144,8 @@ def push_to_api(entries):
                 }
 
                 try:
-                    # Insert row
-                    res = supabase.table("entries").insert(payload).execute()
+                    # Upsert row (on unique constraint conflict)
+                    res = supabase.table("entries").upsert(payload, on_conflict="entry_type,date,subject,summary").execute()
                     if len(res.data) > 0:
                         success += 1
                         print(f"  [OK] [{source}] {payload['subject']}")
