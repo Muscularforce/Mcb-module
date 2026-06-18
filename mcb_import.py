@@ -627,34 +627,90 @@ def extract_generic_cards(html, diary_date, default_type):
     soup = BeautifulSoup(html, "html.parser")
     entries = []
 
-    for node in soup.find_all("div", class_=lambda c: c and "card-body" in c):
-        text = clean_text(node.get_text(" ", strip=True))
-        if not text or len(text) < 10:
+    # Find card containers
+    card_containers = soup.find_all("div", class_=lambda c: c and "card" in (c.split() if isinstance(c, str) else c))
+    if not card_containers:
+        # Fall back to finding card-body directly
+        card_containers = soup.find_all("div", class_=lambda c: c and "card-body" in (c.split() if isinstance(c, str) else c))
+
+    for card in card_containers:
+        # Find the card body
+        body_node = card if "card-body" in (card.get("class") or []) else card.find("div", class_=lambda c: c and "card-body" in (c.split() if isinstance(c, str) else c))
+        if not body_node:
+            continue
+
+        body_text = clean_text(body_node.get_text(" ", strip=True))
+        if not body_text or len(body_text) < 10:
             continue
 
         # Filter out the student's profile card from being scraped as an announcement/worksheet
-        text_upper = text.upper()
-        if "JOVAN FRANCIS" in text_upper or "23RIS0154" in text_upper:
+        full_text_upper = (card.get_text(" ", strip=True)).upper()
+        if "JOVAN" in full_text_upper or "23RIS0154" in full_text_upper:
             continue
 
-        summary = text[:500]
+        summary = body_text[:500]
         title = default_type
         if default_type == "Worksheet":
-            title = extract_worksheet_title(text)
+            title = extract_worksheet_title(body_text)
         else:
-            title_node = node.find(["h6", "strong", "b", "h5"])
+            title_node = body_node.find(["h6", "strong", "b", "h5"])
             if title_node:
                 title = clean_text(title_node.get_text(" ", strip=True)) or default_type
 
-        # Try to get teacher name
-        teacher_span = node.find("span", style=lambda s: s and "darkgray" in s)
-        teacher_name = clean_text(teacher_span.get_text(" ", strip=True)) if teacher_span else ""
+        # Try to get teacher name and date from card-header if it exists
+        teacher_name = ""
+        entry_date = diary_date
+        
+        header_node = card.find("div", class_=lambda c: c and "card-header" in (c.split() if isinstance(c, str) else c))
+        if header_node:
+            header_text = clean_text(header_node.get_text(" ", strip=True))
+            
+            # Extract teacher name from label in header
+            label_node = header_node.find("label")
+            if label_node:
+                teacher_name = clean_text(label_node.get_text(" ", strip=True))
+            
+            # Extract date from span in header
+            span_node = header_node.find("span", style=lambda s: s and "color" in s)
+            if not span_node:
+                span_node = header_node.find("span")
+                
+            header_span_text = clean_text(span_node.get_text(" ", strip=True)) if span_node else header_text
+            
+            # Find date pattern like "03 Jun 2026"
+            date_match = re.search(r"(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})", header_span_text)
+            if date_match:
+                try:
+                    parsed = datetime.strptime(date_match.group(1), "%d %b %Y")
+                    entry_date = parsed.strftime("%d %b %Y")
+                except ValueError:
+                    pass
+                    
+        # Fall back to search inside body text if date not found in header
+        if entry_date == diary_date:
+            date_match = re.search(r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+\w{3}\s+\d{4})", body_text)
+            if date_match:
+                try:
+                    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d %b %Y", "%m/%d/%Y"):
+                        try:
+                            parsed = datetime.strptime(date_match.group(1), fmt)
+                            entry_date = parsed.strftime("%d %b %Y")
+                            break
+                        except ValueError:
+                            continue
+                except Exception:
+                    pass
+
+        # Fall back to darkgray span inside body for teacher name if not found in header
+        if not teacher_name:
+            teacher_span = body_node.find("span", style=lambda s: s and "darkgray" in s)
+            teacher_name = clean_text(teacher_span.get_text(" ", strip=True)) if teacher_span else ""
 
         # Try to get attachment
         attachment_url = None
-        attachment_link = node.find(onclick=re.compile(r"ViewFile", re.I))
+        attachment_link = body_node.find(onclick=re.compile(r"ViewFile", re.I))
         if not attachment_link:
-            for a in node.find_all("a", href=True):
+            for a in body_node.find_all("a", href=True):
                 h = (a.get("href") or "").strip()
                 if h and not h.lower().startswith("javascript:"):
                     if re.search(r"\.(pdf|doc|docx|xls|xlsx|ppt|pptx?|jpe?g|png|gif|zip)(\?|#|$)", h, re.I):
@@ -662,21 +718,6 @@ def extract_generic_cards(html, diary_date, default_type):
                         break
         if attachment_link:
             _, attachment_url = _parse_attachment_link(attachment_link)
-
-        # Try to extract date from card
-        date_match = re.search(r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+\w{3}\s+\d{4})", text)
-        entry_date = diary_date
-        if date_match:
-            try:
-                for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d %b %Y", "%m/%d/%Y"):
-                    try:
-                        parsed = datetime.strptime(date_match.group(1), fmt)
-                        entry_date = parsed.strftime("%d %b %Y")
-                        break
-                    except ValueError:
-                        continue
-            except Exception:
-                pass
 
         entries.append({
             "subject": title,
