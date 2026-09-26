@@ -1,38 +1,65 @@
-import { Entry } from './types';
+import type { Entry, SupabaseEntryRow } from './types';
 import { supabase } from './lib/supabase';
+import { collectAllPages, DEFAULT_PAGE_SIZE } from './lib/pagination.ts';
+import { dedupeEntries, mapSupabaseRow } from './lib/entries.ts';
+
+export {
+  applyRealtimeChange,
+  applyRealtimeChangeDetailed,
+  applyRealtimeEvent,
+  attachmentSourceLabel,
+  canonicalEntryKey,
+  createdAtValue,
+  dedupeEntries,
+  entryDedupeKey,
+  entryReadKey,
+  filterSafeAttachments,
+  firstVisitReadIds,
+  freshnessTimestamp,
+  firstVisitReadKeys,
+  formatLocalDate,
+  getSafeAttachments,
+  hasReadMarker,
+  isFreshEntry,
+  isTrustedAttachmentHost,
+  isTrustedAttachmentUrl,
+  localDateTimestamp,
+  mapEntryRow,
+  mapEntryType,
+  mapSupabaseRow,
+  mergeEntries,
+  mergeEntryValues,
+  normalizeUrl,
+  parseAttachments,
+  parseLocalDate,
+  primaryKey,
+  realtimeReducer,
+  reconcileRealtimeChanges,
+  safeAttachments,
+  sortEntries,
+} from './lib/entries.ts';
+export {
+  collectAllPages,
+  DEFAULT_PAGE_SIZE,
+  fetchAllPages,
+  pageRange,
+  paginateRows,
+} from './lib/pagination.ts';
 
 export const fetchEntries = async (): Promise<Entry[]> => {
-  try {
-    // Fetch directly from Supabase
-    const { data, error } = await supabase
+  const rows = await collectAllPages<SupabaseEntryRow>(async (from, to) => {
+    const result = await supabase
       .from('entries')
       .select('*')
-      .order('date', { ascending: false });
+      .order('date', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to);
 
-    if (error) {
-      throw error;
-    }
+    return {
+      data: result.data as SupabaseEntryRow[] | null,
+      error: result.error,
+    };
+  }, DEFAULT_PAGE_SIZE);
 
-    if (!data) return [];
-
-    return data.map((item: any) => {
-      let mappedType: 'diary' | 'worksheet' | 'announcement' = 'diary';
-      if (item.entry_type === 'Worksheet') mappedType = 'worksheet';
-      else if (item.entry_type === 'Announcement') mappedType = 'announcement';
-      else if (item.entry_type === 'DiaryEntry') mappedType = 'diary';
-
-      return {
-        id: item.id,
-        type: mappedType,
-        title: item.subject || 'Untitled',
-        content: item.summary || '',
-        date: item.date || '',
-        teacher: item.teacher || '',
-        attachment_url: item.attachment_url || undefined
-      };
-    });
-  } catch (error) {
-    console.error('Failed to fetch from Supabase. Returning empty list.', error);
-    return [];
-  }
+  return dedupeEntries(rows.map(row => mapSupabaseRow(row)));
 };

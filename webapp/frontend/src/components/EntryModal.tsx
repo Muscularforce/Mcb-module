@@ -1,6 +1,7 @@
-import React, { useEffect, useCallback } from 'react';
-import { Entry } from '../types';
-import { X, Book, FileText, Bell, Calendar, User, Download, Paperclip } from 'lucide-react';
+import React, { useEffect, useId, useRef } from 'react';
+import type { Entry } from '../types';
+import { formatLocalDate, getSafeAttachments, isAnswerKeyEntry } from '../lib/entries.ts';
+import { Bell, Book, Calendar, Download, FileText, Paperclip, User, X } from 'lucide-react';
 
 interface Props {
   entry: Entry | null;
@@ -8,20 +9,67 @@ interface Props {
 }
 
 export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const titleId = useId();
+  const contentId = useId();
+  const isOpen = entry !== null;
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
   }, [onClose]);
 
   useEffect(() => {
-    if (entry) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+    if (!isOpen) return undefined;
+    const activeElement = document.activeElement;
+    previousFocusRef.current = activeElement instanceof HTMLElement ? activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusTimer = window.setTimeout(() => closeRef.current?.focus(), 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      } else if (!panel.contains(document.activeElement)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-  }, [entry, handleKeyDown]);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      const previousFocus = previousFocusRef.current;
+      if (previousFocus?.isConnected) previousFocus.focus();
+      previousFocusRef.current = null;
+    };
+  }, [isOpen]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -32,13 +80,8 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
     }
   };
 
-  const isAnswerKey = entry && entry.type === 'worksheet' && 
-    (entry.title.toLowerCase().includes('answerkey') || 
-     entry.title.toLowerCase().includes('answer key') || 
-     entry.title.toLowerCase().includes(' ak') || 
-     entry.title.endsWith(' AK') ||
-     entry.title.toLowerCase().includes('ans key') || 
-     entry.title.toLowerCase().includes('anskey'));
+  const isAnswerKey = entry ? isAnswerKeyEntry(entry) : false;
+  const safeAttachments = entry ? getSafeAttachments(entry.attachments, entry.attachment_url) : [];
 
   const getLabel = (type: string) => {
     if (isAnswerKey) return 'Answer Key';
@@ -50,44 +93,53 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
     }
   };
 
-  const getAttachmentDetails = (url: string | undefined) => {
-    if (!url) return { filename: 'file', ext: 'FILE', colorClass: 'file' };
-    const filename = decodeURIComponent(url.split('/').pop() || 'file');
-    const ext = filename.split('.').pop()?.toLowerCase() || 'file';
-    
+  const getAttachmentDetails = (attachment: { name: string }) => {
+    const filename = attachment.name || 'Attachment';
+    const extension = filename.split('.').pop()?.toLowerCase() || '';
     let label = 'FILE';
     let colorClass = 'file';
-    
-    if (['pdf'].includes(ext)) {
+
+    if (extension === 'pdf') {
       label = 'PDF';
       colorClass = 'pdf';
-    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
       label = 'IMAGE';
       colorClass = 'image';
-    } else if (['doc', 'docx'].includes(ext)) {
+    } else if (['doc', 'docx'].includes(extension)) {
       label = 'WORD';
       colorClass = 'word';
-    } else if (['xls', 'xlsx'].includes(ext)) {
+    } else if (['xls', 'xlsx'].includes(extension)) {
       label = 'EXCEL';
       colorClass = 'excel';
-    } else if (['ppt', 'pptx'].includes(ext)) {
+    } else if (['ppt', 'pptx'].includes(extension)) {
       label = 'POWERPOINT';
       colorClass = 'ppt';
     }
-    
+
     return { filename, ext: label, colorClass };
   };
 
   return (
     <div
       className={`modal-overlay ${entry ? 'open' : ''}`}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      aria-hidden={!entry}
+      onMouseDown={event => {
+        if (event.target === event.currentTarget) onCloseRef.current();
+      }}
     >
       {entry && (
-        <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+        <div
+          ref={panelRef}
+          className="modal-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={contentId}
+          tabIndex={-1}
+        >
           <div className={`modal-accent-bar ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`} />
 
-          <button className="modal-close" onClick={onClose} aria-label="Close">
+          <button ref={closeRef} type="button" className="modal-close" onClick={() => onCloseRef.current()} aria-label="Close entry details">
             <X size={18} />
           </button>
 
@@ -96,10 +148,17 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
               {getIcon(entry.type)}
             </div>
             <div className="modal-header-text">
-              <div className={`entry-badge ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`} style={{ marginBottom: 10 }}>
-                {getLabel(entry.type)}
+              <div className="modal-labels">
+                <div className={`entry-badge ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
+                  {getLabel(entry.type)}
+                </div>
+                {entry.label && (
+                  <span className="modal-portal-label" title={`Portal label: ${entry.label}`}>
+                    Portal: {entry.label}
+                  </span>
+                )}
               </div>
-              <h2 className="modal-title">{entry.title}</h2>
+              <h2 id={titleId} className="modal-title">{entry.title}</h2>
               <div className="modal-meta">
                 {entry.teacher && (
                   <span className="modal-meta-item">
@@ -109,11 +168,11 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
                 )}
                 <span className="modal-meta-item">
                   <Calendar size={14} />
-                  {new Date(entry.date).toLocaleDateString('en-US', {
+                  {formatLocalDate(entry.date, {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric'
+                    day: 'numeric',
                   })}
                 </span>
               </div>
@@ -121,52 +180,59 @@ export const EntryModal: React.FC<Props> = ({ entry, onClose }) => {
           </div>
 
           <div className="modal-body">
-            <div className="modal-section-title">Details</div>
-            <p className="modal-content-text">{entry.content}</p>
+            <div className="modal-section-title">Description</div>
+            <p id={contentId} className="modal-content-text">{entry.content}</p>
 
-            <div className="modal-section-title">Attachment</div>
-            {entry.attachment_url ? (() => {
-              const { filename, ext, colorClass } = getAttachmentDetails(entry.attachment_url);
-              return (
-                <div className={`attachment-card ${colorClass}`}>
-                  <div className="attachment-icon-wrapper">
-                    <FileText size={24} className="attachment-icon" />
-                    <span className="attachment-badge">{ext}</span>
-                  </div>
-                  <div className="attachment-info">
-                    <div className="attachment-filename" title={filename}>
-                      {filename}
+            <div className="modal-section-title">
+              {safeAttachments.length === 1 ? 'Attachment' : 'Attachments'}
+            </div>
+            {safeAttachments.length > 0 ? (
+              <div className="attachment-list">
+                {safeAttachments.map(attachment => {
+                  const { filename, ext, colorClass } = getAttachmentDetails(attachment);
+                  return (
+                    <div className={`attachment-card ${colorClass}`} key={attachment.url}>
+                      <div className="attachment-icon-wrapper">
+                        <FileText size={24} className="attachment-icon" />
+                        <span className="attachment-badge">{ext}</span>
+                      </div>
+                      <div className="attachment-info">
+                        <div className="attachment-filename" title={filename}>
+                          {filename}
+                        </div>
+                        <div className="attachment-source">MyClassboard document</div>
+                      </div>
+                      <div className="attachment-actions">
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attachment-action-btn view"
+                          aria-label={`View ${filename}`}
+                        >
+                          View
+                        </a>
+                        <a
+                          href={attachment.url}
+                          download={filename}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attachment-action-btn download"
+                          aria-label={`Download ${filename}`}
+                          title={`Download ${filename}`}
+                        >
+                          <Download size={14} />
+                          <span>Download</span>
+                        </a>
+                      </div>
                     </div>
-                    <div className="attachment-source">
-                      MyClassboard Secure CDN Document
-                    </div>
-                  </div>
-                  <div className="attachment-actions">
-                    <a
-                      href={entry.attachment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="attachment-action-btn view"
-                    >
-                      View
-                    </a>
-                    <a
-                      href={entry.attachment_url}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="attachment-action-btn download"
-                      title="Download File"
-                    >
-                      <Download size={14} />
-                    </a>
-                  </div>
-                </div>
-              );
-            })() : (
+                  );
+                })}
+              </div>
+            ) : (
               <div className="modal-no-attachment">
                 <Paperclip size={16} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-                No attachment available for this entry
+                No trusted attachment available for this entry
               </div>
             )}
           </div>

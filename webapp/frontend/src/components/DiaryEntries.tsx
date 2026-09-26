@@ -1,5 +1,6 @@
 import React from 'react';
-import { Entry } from '../types';
+import type { Entry } from '../types';
+import { formatLocalDate, getSafeAttachments } from '../lib/entries.ts';
 import { Book } from 'lucide-react';
 
 interface Props {
@@ -17,21 +18,28 @@ export const DiaryEntries: React.FC<Props> = ({ entries }) => {
         {entries.length === 0 ? (
           <p className="item-content">No diary entries found.</p>
         ) : (
-          entries.map(entry => (
-            <div key={entry.id} className="item">
-              <div className="item-header">
-                <div className="item-title">{entry.title}</div>
-                <div className="item-date">{new Date(entry.date).toLocaleDateString()}</div>
+          entries.map(entry => {
+            const attachments = getSafeAttachments(entry.attachments, entry.attachment_url);
+            return (
+              <div key={entry.id} className="item">
+                <div className="item-header">
+                  <div className="item-title">{entry.title}</div>
+                  <div className="item-date">{formatLocalDate(entry.date)}</div>
+                </div>
+                <div className="item-content">{entry.content}</div>
+                {attachments.length > 0 && (
+                  <div className="download-links">
+                    {attachments.map(attachment => (
+                      <a key={attachment.url} href={attachment.url} download={attachment.name} target="_blank" rel="noopener noreferrer" className="download-link">
+                        Download {attachment.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <div className="badge diary">Diary</div>
               </div>
-              <div className="item-content">{entry.content}</div>
-              {entry.attachment_url && (
-                <a href={entry.attachment_url} target="_blank" rel="noopener noreferrer" className="download-link">
-                  Download Attachment
-                </a>
-              )}
-              <div className="badge diary">Diary</div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

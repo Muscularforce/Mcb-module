@@ -1,6 +1,7 @@
-import React, { useRef, useCallback } from 'react';
-import { Entry } from '../types';
-import { Book, FileText, Bell, Calendar, User, Paperclip, ArrowUpRight } from 'lucide-react';
+import React, { useCallback, useRef } from 'react';
+import type { Entry } from '../types';
+import { formatLocalDate, getSafeAttachments, isAnswerKeyEntry } from '../lib/entries.ts';
+import { ArrowUpRight, Bell, Book, Calendar, FileText, Paperclip, User } from 'lucide-react';
 
 interface Props {
   entry: Entry;
@@ -11,37 +12,34 @@ interface Props {
 export const EntryCard: React.FC<Props> = ({ entry, onClick, index = 0 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const isAnswerKey = isAnswerKeyEntry(entry);
+  const attachmentCount = getSafeAttachments(entry.attachments, entry.attachment_url).length;
 
-  const isAnswerKey = entry.type === 'worksheet' &&
-    (entry.title.toLowerCase().includes('answerkey') ||
-     entry.title.toLowerCase().includes('answer key') ||
-     entry.title.toLowerCase().includes(' ak') ||
-     entry.title.endsWith(' AK') ||
-     entry.title.toLowerCase().includes('ans key') ||
-     entry.title.toLowerCase().includes('anskey'));
-
-  /* 3D tilt + glow follow on mouse move */
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((event: React.MouseEvent) => {
     const card = cardRef.current;
     const glow = glowRef.current;
     if (!card || !glow) return;
     const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    const rotateX = ((y - cy) / cy) * -7;
-    const rotateY = ((x - cx) / cx) * 7;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -7;
+    const rotateY = ((x - centerX) / centerX) * 7;
     card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03,1.03,1.03)`;
     glow.style.background = `radial-gradient(600px circle at ${x}px ${y}px, rgba(99,102,241,0.12), transparent 40%)`;
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    const card = cardRef.current;
-    const glow = glowRef.current;
-    if (card) card.style.transform = '';
-    if (glow) glow.style.background = 'transparent';
+    if (cardRef.current) cardRef.current.style.transform = '';
+    if (glowRef.current) glowRef.current.style.background = 'transparent';
   }, []);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onClick(entry);
+  }, [entry, onClick]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -62,58 +60,56 @@ export const EntryCard: React.FC<Props> = ({ entry, onClick, index = 0 }) => {
     }
   };
 
-  const formattedDate = new Date(entry.date).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric',
-  });
-
   return (
     <div
       ref={cardRef}
       className={`entry-card ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}
       style={{ animationDelay: `${index * 60}ms` } as React.CSSProperties}
+      role="button"
+      tabIndex={0}
+      aria-haspopup="dialog"
+      aria-label={`Open ${entry.title}`}
       onClick={() => onClick(entry)}
+      onKeyDown={handleKeyDown}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Mouse-following inner glow */}
       <div ref={glowRef} className="card-glow-follow" />
-
-      {/* Animated gradient border */}
       <div className="card-gradient-border" />
-
-      {/* Shimmer sweep */}
       <div className="card-shimmer" />
-
-      {/* Sparkle dots */}
       <div className="card-sparkle s1" />
       <div className="card-sparkle s2" />
       <div className="card-sparkle s3" />
 
-      {/* Content */}
       <div className="card-inner">
-        {/* Top: type pill + attachment indicator */}
         <div className="card-top">
-          <span className={`card-type-pill ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
-            {getIcon(entry.type)}
-            {getLabel(entry.type)}
-          </span>
+          <div className="card-label-group">
+            <span className={`card-type-pill ${entry.type} ${isAnswerKey ? 'answer-key' : ''}`}>
+              {getIcon(entry.type)}
+              {getLabel(entry.type)}
+            </span>
+            {entry.label && (
+              <span className="card-portal-label" title={`Portal label: ${entry.label}`}>
+                {entry.label}
+              </span>
+            )}
+          </div>
           <div className="card-top-right">
-            {entry.attachment_url && (
-              <span className="card-attach-indicator" title="Has attachment">
+            {attachmentCount > 0 && (
+              <span className="card-attach-indicator" title={`${attachmentCount} attachment${attachmentCount === 1 ? '' : 's'}`}>
                 <Paperclip size={11} />
+                <span>{attachmentCount}</span>
               </span>
             )}
             <span className="card-date-chip">
               <Calendar size={10} />
-              {formattedDate}
+              {formatLocalDate(entry.date)}
             </span>
           </div>
         </div>
 
-        {/* Title */}
         <h3 className="card-title">{entry.title}</h3>
 
-        {/* Teacher chip */}
         {entry.teacher && (
           <div className="card-teacher">
             <User size={11} />
@@ -121,15 +117,13 @@ export const EntryCard: React.FC<Props> = ({ entry, onClick, index = 0 }) => {
           </div>
         )}
 
-        {/* Content preview */}
         <p className="card-preview">{entry.content}</p>
 
-        {/* Footer CTA */}
         <div className="card-footer">
-          {entry.attachment_url ? (
+          {attachmentCount > 0 ? (
             <span className="card-attach-badge">
               <Paperclip size={11} />
-              File attached
+              {attachmentCount} attachment{attachmentCount === 1 ? '' : 's'}
             </span>
           ) : <span />}
           <span className="card-cta">
